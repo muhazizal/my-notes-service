@@ -7,11 +7,18 @@ const bodyParser = require('body-parser')
 
 const sequelize = require('./config/database')
 
+const noteRoutes = require('./routes/note')
+
 const app = express()
 
+// Body Parser
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
+// Routes
+app.use(noteRoutes)
+
+// Start
 sequelize
 	.sync()
 	.then(() => {
