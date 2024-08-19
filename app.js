@@ -8,6 +8,7 @@ const bodyParser = require('body-parser')
 const sequelize = require('./config/database')
 
 const noteRoutes = require('./routes/note')
+const userRoutes = require('./routes/auth')
 
 const app = express()
 
@@ -17,6 +18,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 
 // Routes
 app.use(noteRoutes)
+app.use(userRoutes)
 
 // Start
 sequelize
