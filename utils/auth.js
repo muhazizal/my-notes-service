@@ -1,3 +1,12 @@
+exports.validateReqBody = (errors, res) => {
+	if (!errors.isEmpty()) {
+		return res.status(422).json({
+			message: 'Invalid request',
+			data: errors.array(),
+			code: 422,
+		})
+	}
+}
 exports.validateUserExist = (user) => {
 	if (user) {
 		const error = new Error('User already exists')
@@ -5,7 +14,6 @@ exports.validateUserExist = (user) => {
 		throw error
 	}
 }
-
 exports.validateUserNotExist = (user) => {
 	if (!user) {
 		const error = new Error('Invalid Credentials')
@@ -13,7 +21,6 @@ exports.validateUserNotExist = (user) => {
 		throw error
 	}
 }
-
 exports.validatePasswordNotMatch = (isMatch) => {
 	if (!isMatch) {
 		const error = new Error('Invalid Credentials')

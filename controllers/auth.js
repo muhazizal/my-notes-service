@@ -1,10 +1,12 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const { validationResult } = require('express-validator')
 
 const User = require('../models/user')
 const model = User()
 
 const {
+	validateReqBody,
 	validateUserExist,
 	validateUserNotExist,
 	validatePasswordNotMatch,
@@ -13,6 +15,9 @@ const {
 exports.register = async (req, res, next) => {
 	try {
 		await model.sequelize.transaction(async (t) => {
+			const errors = validationResult(req)
+			validateReqBody(errors, res)
+
 			const { username, password, fullname } = req.body
 
 			let user = await model.findOne({
@@ -21,6 +26,7 @@ exports.register = async (req, res, next) => {
 				},
 				transaction: t,
 			})
+
 			validateUserExist(user)
 
 			const salt = await bcrypt.genSalt(10)
@@ -44,6 +50,9 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
 	try {
 		const result = await model.sequelize.transaction(async (t) => {
+			const errors = validationResult(req)
+			validateReqBody(errors, res)
+
 			const { username, password } = req.body
 
 			const user = await model.findOne({
@@ -52,9 +61,11 @@ exports.login = async (req, res, next) => {
 				},
 				transaction: t,
 			})
+
 			validateUserNotExist(user)
 
 			const isMatch = await bcrypt.compare(password, user.password)
+
 			validatePasswordNotMatch(isMatch)
 
 			const jwtPayload = {
