@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator')
+const { Op } = require('sequelize')
 
 const User = require('../models/user')
 const model = User()
@@ -18,11 +19,11 @@ exports.register = async (req, res, next) => {
 			const errors = validationResult(req)
 			validateReqBody(errors, res)
 
-			const { username, password, fullname } = req.body
+			const { username, email, password, fullname } = req.body
 
 			let user = await model.findOne({
 				where: {
-					username,
+					[Op.or]: [{ username }, { email }],
 				},
 				transaction: t,
 			})
@@ -32,7 +33,7 @@ exports.register = async (req, res, next) => {
 			const salt = await bcrypt.genSalt(10)
 			const hashedPassword = await bcrypt.hash(password, salt)
 
-			return await model.create({ username, password: hashedPassword, fullname })
+			return await model.create({ username, email, password: hashedPassword, fullname })
 		})
 
 		res.status(201).json({

@@ -9,8 +9,9 @@ router.put(
 	'/register',
 	[
 		body('username').trim().notEmpty().withMessage('Username is empty'),
-		body('password').trim().notEmpty().withMessage('Password is empty'),
-		body('fullname').trim().notEmpty().withMessage('Password is empty'),
+		body('email').isEmail().withMessage('Email is empty').normalizeEmail(),
+		body('password').trim().isLength({ min: 5 }).withMessage('Password minimum 5 chars'),
+		body('fullname').trim().notEmpty().withMessage('Fullname is empty'),
 	],
 	register
 )
