@@ -22,9 +22,9 @@ app.use(noteRoutes)
 sequelize
 	.sync()
 	.then(() => {
-		app.listen(8000, '127.0.0.1', () => {
+		app.listen(process.env.APP_PORT, process.env.APP_HOST, () => {
 			consola.ready({
-				message: `Server listening on port: ${8000}`,
+				message: `Server listening on port: ${process.env.APP_PORT}`,
 				badge: true,
 			})
 		})
