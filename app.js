@@ -17,8 +17,8 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
 // Routes
-app.use(noteRoutes)
-app.use(userRoutes)
+app.use('/api/notes', noteRoutes)
+app.use('/api/auth', userRoutes)
 
 // Start
 sequelize
