@@ -1,6 +1,5 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const nodemailer = require('nodemailer')
 const crypto = require('crypto')
 const { validationResult } = require('express-validator')
 const { Op } = require('sequelize')
@@ -13,6 +12,8 @@ const {
 	validateUserExist,
 	validateUserNotExist,
 	validatePasswordNotMatch,
+	validateUserVerified,
+	sendEmailVerification,
 } = require('../utils/auth')
 
 exports.register = async (req, res, next) => {
@@ -46,27 +47,7 @@ exports.register = async (req, res, next) => {
 				verificationTokenExpires,
 			})
 
-			// Email Verification token through email
-			const verificationUrl = `${req.protocol}://${req.get(
-				'host'
-			)}/api/auth/verify/${verificationToken}`
-
-			const transporter = nodemailer.createTransport({
-				service: 'Gmail',
-				auth: {
-					user: process.env.EMAIL_USER,
-					pass: process.env.EMAIL_PASS,
-				},
-			})
-
-			const mailOptions = {
-				from: process.env.EMAIL_USER,
-				to: user.email,
-				subject: 'My Notes - Email Verification',
-				text: `Welcome to My Notes, please verify your email by clicking the following URL: ${verificationUrl}`,
-			}
-
-			await transporter.sendMail(mailOptions)
+			sendEmailVerification(req, verificationToken, email)
 		})
 
 		res.status(201).json({
@@ -150,6 +131,39 @@ exports.verify = async (req, res, next) => {
 		res.status(200).json({
 			message: 'Success verify user email',
 			code: 200,
+		})
+	} catch (error) {
+		if (!error.statusCode) {
+			error.statusCode = 500
+		}
+		next(error)
+	}
+}
+
+exports.resendVerification = async (req, res, next) => {
+	try {
+		await UserModel.sequelize.transaction(async (t) => {
+			const { email } = req.body
+
+			const user = await UserModel.findOne({
+				where: {
+					email,
+				},
+				transaction: t,
+			})
+
+			validateUserNotExist(user)
+			validateUserVerified(user.isVerified)
+
+			const verificationToken = crypto.randomBytes(32).toString('hex')
+			const verificationTokenExpires = Date.now() + 3600000
+
+			user.verificationToken = verificationToken
+			user.verificationTokenExpires = verificationTokenExpires
+
+			await user.save({ transaction: t })
+
+			sendEmailVerification(req, verificationToken, email)
 		})
 	} catch (error) {
 		if (!error.statusCode) {
