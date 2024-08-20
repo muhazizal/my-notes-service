@@ -1,10 +1,11 @@
 const express = require('express')
 const { body } = require('express-validator')
 
-const { register, login } = require('../controllers/auth')
+const { register, login, verify } = require('../controllers/auth')
 
 const router = express.Router()
 
+// CREATE user
 router.put(
 	'/register',
 	[
@@ -15,6 +16,8 @@ router.put(
 	],
 	register
 )
+
+// LOGIN user
 router.post(
 	'/login',
 	[
@@ -23,5 +26,8 @@ router.post(
 	],
 	login
 )
+
+// VERIFY user
+router.get('/verify/:token', verify)
 
 module.exports = router
