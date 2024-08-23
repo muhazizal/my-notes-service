@@ -1,26 +1,24 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
-const { validationResult } = require('express-validator')
 const { Op } = require('sequelize')
 
 const User = require('../models/user')
 const UserModel = User()
 
 const {
-	validateReqBody,
+	validateRequest,
 	validateUserExist,
 	validateUserNotExist,
 	validatePasswordNotMatch,
 	validateUserVerified,
 	sendEmailVerification,
-} = require('../utils/auth')
+} = require('../validator/auth')
 
 exports.register = async (req, res, next) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
-			const errors = validationResult(req)
-			validateReqBody(errors, res)
+			validateRequest(req, res)
 
 			const { username, email, password, fullname } = req.body
 
@@ -47,7 +45,7 @@ exports.register = async (req, res, next) => {
 				verificationTokenExpires,
 			})
 
-			sendEmailVerification(req, verificationToken, email)
+			await sendEmailVerification(req, verificationToken, email)
 		})
 
 		res.status(201).json({
@@ -65,8 +63,7 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
 	try {
 		const result = await UserModel.sequelize.transaction(async (t) => {
-			const errors = validationResult(req)
-			validateReqBody(errors, res)
+			validateRequest(req, res)
 
 			const { username, password } = req.body
 

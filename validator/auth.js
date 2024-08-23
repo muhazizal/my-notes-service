@@ -1,6 +1,8 @@
+const { validationResult } = require('express-validator')
 const nodemailer = require('nodemailer')
 
-exports.validateReqBody = (errors, res) => {
+exports.validateRequest = (req, res) => {
+	const errors = validationResult(req)
 	if (!errors.isEmpty()) {
 		return res.status(422).json({
 			message: 'Invalid request',
