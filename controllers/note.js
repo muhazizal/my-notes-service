@@ -2,7 +2,7 @@ const { validationResult } = require('express-validator')
 const Note = require('../models/note')
 const model = Note()
 
-const { validateReqBody, validateNoteExist, validateReqParams } = require('../utils/note')
+const { validateRequest, validateNoteExist } = require('../validator/note')
 
 exports.getNotes = async (req, res, next) => {
 	try {
@@ -29,7 +29,7 @@ exports.createNote = async (req, res, next) => {
 	try {
 		const result = await model.sequelize.transaction(async (t) => {
 			const errors = validationResult(req)
-			validateReqBody(errors, res)
+			validateRequest(errors, res)
 
 			const { title, description } = req.body
 
@@ -58,7 +58,8 @@ exports.createNote = async (req, res, next) => {
 exports.getNoteById = async (req, res, next) => {
 	try {
 		const result = await model.sequelize.transaction(async (t) => {
-			validateReqParams(req.params)
+			const errors = validationResult(req)
+			validateRequest(errors, res)
 
 			const { id } = req.params
 
@@ -85,10 +86,8 @@ exports.getNoteById = async (req, res, next) => {
 exports.updateNote = async (req, res, next) => {
 	try {
 		const result = await model.sequelize.transaction(async (t) => {
-			validateReqParams(req.params)
-
 			const errors = validationResult(req)
-			validateReqBody(errors, res)
+			validateRequest(errors, res)
 
 			const { id } = req.params
 			const { title, description } = req.body
@@ -119,8 +118,6 @@ exports.updateNote = async (req, res, next) => {
 exports.deleteNote = async (req, res, next) => {
 	try {
 		await model.sequelize.transaction(async (t) => {
-			validateReqParams(req.params)
-
 			const { id } = req.params
 
 			const note = await model.findByPk(id, { transaction: t })
