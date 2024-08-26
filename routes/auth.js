@@ -2,6 +2,7 @@ const express = require('express')
 
 const { register, login, verify, resendVerification } = require('../controllers/auth')
 const { registerSchema, loginSchema, resendVerificationSchema } = require('../schema/auth')
+const { resendVerificationLimiter } = require('../utils/rate-limiter')
 
 const router = express.Router()
 
@@ -15,6 +16,10 @@ router.post('/login', loginSchema, login)
 router.get('/verify/:token', verify)
 
 // RESEND verification
-router.post('/resend-verification', resendVerificationSchema, resendVerification)
+router.post(
+	'/resend-verification',
+	[resendVerificationLimiter, resendVerificationSchema],
+	resendVerification
+)
 
 module.exports = router

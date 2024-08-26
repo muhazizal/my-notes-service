@@ -160,7 +160,12 @@ exports.resendVerification = async (req, res, next) => {
 
 			await user.save({ transaction: t })
 
-			sendEmailVerification(req, verificationToken, email)
+			await sendEmailVerification(req, verificationToken, email)
+		})
+
+		res.status(200).json({
+			message: 'Success resend verification',
+			code: 200,
 		})
 	} catch (error) {
 		if (!error.statusCode) {
