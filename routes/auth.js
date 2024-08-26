@@ -1,5 +1,4 @@
 const express = require('express')
-const { body, param } = require('express-validator')
 
 const { register, login, verify, resendVerification } = require('../controllers/auth')
 const { registerSchema, loginSchema, resendVerificationSchema } = require('../schema/auth')
