@@ -1,6 +1,6 @@
 exports.validateRequest = (errors, res) => {
 	if (!errors.isEmpty()) {
-		return res.status(422).json({
+		throw res.status(422).json({
 			message: 'Invalid request',
 			data: errors.array(),
 			code: 422,
