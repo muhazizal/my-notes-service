@@ -12,8 +12,8 @@ const {
 	validateUserNotExist,
 	validatePasswordNotMatch,
 	validateUserVerified,
-	sendEmailVerification,
 } = require('../validator/auth')
+const { sendEmailVerification } = require('../utils/send-email')
 
 exports.register = async (req, res, next) => {
 	try {
