@@ -1,4 +1,3 @@
-const { validationResult } = require('express-validator')
 const Note = require('../models/note')
 const model = Note()
 
@@ -28,8 +27,7 @@ exports.getNotes = async (req, res, next) => {
 exports.createNote = async (req, res, next) => {
 	try {
 		const result = await model.sequelize.transaction(async (t) => {
-			const errors = validationResult(req)
-			validateRequest(errors, res)
+			validateRequest(req, res)
 
 			const { title, description } = req.body
 
@@ -58,8 +56,7 @@ exports.createNote = async (req, res, next) => {
 exports.getNoteById = async (req, res, next) => {
 	try {
 		const result = await model.sequelize.transaction(async (t) => {
-			const errors = validationResult(req)
-			validateRequest(errors, res)
+			validateRequest(req, res)
 
 			const { id } = req.params
 
@@ -86,8 +83,7 @@ exports.getNoteById = async (req, res, next) => {
 exports.updateNote = async (req, res, next) => {
 	try {
 		const result = await model.sequelize.transaction(async (t) => {
-			const errors = validationResult(req)
-			validateRequest(errors, res)
+			validateRequest(req, res)
 
 			const { id } = req.params
 			const { title, description } = req.body

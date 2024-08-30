@@ -5,19 +5,19 @@ const { createNoteSchema } = require('../schema/note')
 
 const router = express.Router()
 
-// GET list notes
+// Get list notes
 router.get('/', getNotes)
 
-// CREATE note
+// Create note
 router.post('/', createNoteSchema, createNote)
 
-// GET note
+// Get note
 router.get('/:id', getNoteById)
 
-// UPDATE note
+// Update note
 router.put('/:id', createNoteSchema, updateNote)
 
-// DELETE note
+// Delete note
 router.delete('/:id', deleteNote)
 
 module.exports = router
