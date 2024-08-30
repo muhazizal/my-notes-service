@@ -9,6 +9,19 @@ const emailSchema = {
 		errorMessage: 'Email is not valid',
 	},
 }
+const passwordSchema = {
+	trim: true,
+	notEmpty: {
+		bail: true,
+		errorMessage: 'Password is required',
+	},
+	isLength: {
+		options: {
+			min: 5,
+		},
+		errorMessage: 'Password must be at least 5 characters long',
+	},
+}
 
 exports.registerSchema = checkSchema(
 	{
@@ -27,19 +40,7 @@ exports.registerSchema = checkSchema(
 			},
 		},
 		email: emailSchema,
-		password: {
-			trim: true,
-			notEmpty: {
-				bail: true,
-				errorMessage: 'Password is required',
-			},
-			isLength: {
-				options: {
-					min: 5,
-				},
-				errorMessage: 'Password must be at least 5 characters long',
-			},
-		},
+		password: passwordSchema,
 		fullname: {
 			notEmpty: {
 				bail: true,
@@ -72,6 +73,20 @@ exports.loginSchema = checkSchema(
 exports.resendVerificationSchema = checkSchema(
 	{
 		email: emailSchema,
+	},
+	['body']
+)
+
+exports.forgotPasswordSchema = checkSchema(
+	{
+		email: emailSchema,
+	},
+	['body']
+)
+
+exports.resetPasswordSchema = checkSchema(
+	{
+		password: passwordSchema,
 	},
 	['body']
 )

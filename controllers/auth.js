@@ -1,6 +1,5 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const crypto = require('crypto')
 const { Op } = require('sequelize')
 
 const User = require('../models/user')
@@ -13,7 +12,9 @@ const {
 	validatePasswordNotMatch,
 	validateUserVerified,
 } = require('../validator/auth')
-const { sendEmailVerification } = require('../utils/send-email')
+
+const { sendEmailVerification, sendEmailResetPassword } = require('../utils/send-email')
+const { generateToken } = require('../utils/token')
 
 exports.register = async (req, res, next) => {
 	try {
@@ -33,17 +34,19 @@ exports.register = async (req, res, next) => {
 
 			const salt = await bcrypt.genSalt(10)
 			const hashedPassword = await bcrypt.hash(password, salt)
-			const verificationToken = crypto.randomBytes(32).toString('hex')
-			const verificationTokenExpires = Date.now() + 3600000
+			const { token, tokenExpires } = generateToken()
 
-			user = await UserModel.create({
-				username,
-				email,
-				password: hashedPassword,
-				fullname,
-				verificationToken,
-				verificationTokenExpires,
-			})
+			user = await UserModel.create(
+				{
+					username,
+					email,
+					password: hashedPassword,
+					fullname,
+					verificationToken: token,
+					verificationTokenExpires: tokenExpires,
+				},
+				{ transaction: t }
+			)
 
 			await sendEmailVerification(req, verificationToken, email)
 		})
@@ -122,7 +125,7 @@ exports.verify = async (req, res, next) => {
 			user.verificationToken = null
 			user.verificationTokenExpires = null
 
-			return await user.save()
+			await user.save({ transaction: t })
 		})
 
 		res.status(200).json({
@@ -140,6 +143,8 @@ exports.verify = async (req, res, next) => {
 exports.resendVerification = async (req, res, next) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
+			validateRequest(req, res)
+
 			const { email } = req.body
 
 			const user = await UserModel.findOne({
@@ -152,11 +157,10 @@ exports.resendVerification = async (req, res, next) => {
 			validateUserNotExist(user)
 			validateUserVerified(user.isVerified)
 
-			const verificationToken = crypto.randomBytes(32).toString('hex')
-			const verificationTokenExpires = Date.now() + 3600000
+			const { token, tokenExpires } = generateToken()
 
-			user.verificationToken = verificationToken
-			user.verificationTokenExpires = verificationTokenExpires
+			user.verificationToken = token
+			user.verificationTokenExpires = tokenExpires
 
 			await user.save({ transaction: t })
 
@@ -165,6 +169,86 @@ exports.resendVerification = async (req, res, next) => {
 
 		res.status(200).json({
 			message: 'Success resend verification',
+			code: 200,
+		})
+	} catch (error) {
+		if (!error.statusCode) {
+			error.statusCode = 500
+		}
+		next(error)
+	}
+}
+
+exports.forgotPassword = async (req, res, next) => {
+	try {
+		await UserModel.sequelize.transaction(async (t) => {
+			validateRequest(req, res)
+
+			const { email } = req.body
+
+			const user = await UserModel.findOne({
+				where: {
+					email,
+				},
+				transaction: t,
+			})
+
+			validateUserNotExist(user)
+
+			const { token, tokenExpires } = generateToken()
+
+			user.resetPasswordToken = token
+			user.resetPasswordTokenExpires = tokenExpires
+
+			await user.save({ transaction: t })
+
+			await sendEmailResetPassword(req, token, email)
+		})
+
+		res.status(200).json({
+			message: 'Success forgot password, please check your email',
+			code: 200,
+		})
+	} catch (error) {
+		if (!error.statusCode) {
+			error.statusCode = 500
+		}
+		next(error)
+	}
+}
+
+exports.resetPassword = async (req, res, next) => {
+	try {
+		await UserModel.sequelize.transaction(async (t) => {
+			validateRequest(req, res)
+
+			const { token } = req.params
+			const { password } = req.body
+
+			const user = await UserModel.findOne({
+				where: {
+					resetPasswordToken: token,
+					resetPasswordTokenExpires: {
+						[Op.gt]: Date.now().toString(),
+					},
+				},
+				transaction: t,
+			})
+
+			validateUserNotExist(user)
+
+			const salt = await bcrypt.genSalt(10)
+			const hashedPassword = await bcrypt.hash(password, salt)
+
+			user.password = hashedPassword
+			user.resetPasswordToken = null
+			user.resetPasswordTokenExpires = null
+
+			await user.save({ transaction: t })
+		})
+
+		res.status(200).json({
+			message: 'Success reset password, please log in with new password',
 			code: 200,
 		})
 	} catch (error) {

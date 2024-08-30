@@ -3,7 +3,7 @@ const { RedisStore } = require('rate-limit-redis')
 
 const redisClient = require('../config/redis')
 
-exports.resendVerificationLimiter = rateLimit({
+exports.emailBlastLimiter = rateLimit({
 	store: new RedisStore({
 		sendCommand: (...args) => redisClient.sendCommand(args),
 	}),

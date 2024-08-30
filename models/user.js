@@ -45,6 +45,14 @@ module.exports = () => {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
+			resetPasswordToken: {
+				type: DataTypes.STRING,
+				allowNull: true,
+			},
+			resetPasswordTokenExpires: {
+				type: DataTypes.STRING,
+				allowNull: true,
+			},
 		},
 		{
 			sequelize,
