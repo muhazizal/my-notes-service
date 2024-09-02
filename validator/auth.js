@@ -52,3 +52,17 @@ exports.validateTokenIsBlacklisted = (token) => {
 		throw error
 	}
 }
+exports.validateUsernameExist = (username, payload) => {
+	if (username === payload) {
+		const error = new Error('Username is already exist')
+		error.statusCode = 401
+		throw error
+	}
+}
+exports.validateEmailExist = (userEmail, payload) => {
+	if (userEmail === payload) {
+		const error = new Error('Email is already exist')
+		error.statusCode = 401
+		throw error
+	}
+}
