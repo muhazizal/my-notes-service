@@ -1,52 +1,18 @@
 const { checkSchema } = require('express-validator')
 
-const emailSchema = {
-	notEmpty: {
-		bail: true,
-		errorMessage: 'Email is required.',
-	},
-	isEmail: {
-		errorMessage: 'Email is not valid',
-	},
-}
-const passwordSchema = {
-	trim: true,
-	notEmpty: {
-		bail: true,
-		errorMessage: 'Password is required',
-	},
-	isLength: {
-		options: {
-			min: 5,
-		},
-		errorMessage: 'Password must be at least 5 characters long',
-	},
-}
+const {
+	usernameSchema,
+	emailSchema,
+	passwordSchema,
+	fullnameSchema,
+} = require('../schema/standalone')
 
 exports.registerSchema = checkSchema(
 	{
-		username: {
-			notEmpty: {
-				bail: true,
-				errorMessage: 'Username is required',
-			},
-			isAlphanumeric: {
-				bail: true,
-				errorMessage: 'Username must be valid alphanumeric',
-			},
-			isLength: {
-				options: { min: 3 },
-				errorMessage: 'Username must be at least 3 characters long',
-			},
-		},
+		username: usernameSchema,
 		email: emailSchema,
 		password: passwordSchema,
-		fullname: {
-			notEmpty: {
-				bail: true,
-				errorMessage: 'Fullname is required',
-			},
-		},
+		fullname: fullnameSchema,
 	},
 	['body']
 )
