@@ -93,3 +93,31 @@ exports.updateProfile = async (req, res, next) => {
 		next(error)
 	}
 }
+
+exports.deleteAccount = async (req, res, next) => {
+	try {
+		await UserModel.sequelize.transaction(async (t) => {
+			const { id } = req.params
+
+			const user = await UserModel.findByPk(id, {
+				transaction: t,
+			})
+
+			validateUserNotExist(user)
+
+			await user.destroy({
+				transaction: t,
+			})
+		})
+
+		res.status(200).json({
+			message: 'Success delete account',
+			code: 200,
+		})
+	} catch (error) {
+		if (!error.statusCode) {
+			error.statusCode = 500
+		}
+		next(error)
+	}
+}
