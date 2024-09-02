@@ -58,7 +58,6 @@ exports.loginSchema = checkSchema(
 				bail: true,
 				errorMessage: 'Username is required',
 			},
-			custom: {},
 		},
 		password: {
 			notEmpty: {

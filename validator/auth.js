@@ -13,7 +13,7 @@ exports.validateRequest = (req, res) => {
 exports.validateUserExist = (user) => {
 	if (user) {
 		const error = new Error('User already exists')
-		error.statusCode = 400
+		error.statusCode = 401
 		throw error
 	}
 }
@@ -34,7 +34,21 @@ exports.validatePasswordNotMatch = (isMatch) => {
 exports.validateUserVerified = (isVerified) => {
 	if (isVerified) {
 		const error = new Error('User already verified')
-		error.statusCode = 400
+		error.statusCode = 401
+		throw error
+	}
+}
+exports.validateTokenNotExist = (token) => {
+	if (!token) {
+		const error = new Error('No token, authorization denied')
+		error.statusCode = 401
+		throw error
+	}
+}
+exports.validateTokenIsBlacklisted = (token) => {
+	if (token) {
+		const error = new Error('Token has been blacklisted. Please log in again.')
+		error.statusCode = 401
 		throw error
 	}
 }

@@ -7,6 +7,7 @@ const {
 	resendVerification,
 	forgotPassword,
 	resetPassword,
+	logout,
 } = require('../controllers/auth')
 
 const {
@@ -18,6 +19,8 @@ const {
 } = require('../schema/auth')
 
 const { emailBlastLimiter } = require('../utils/rate-limiter')
+
+const { authMiddleware } = require('../middleware/auth')
 
 const router = express.Router()
 
@@ -42,5 +45,8 @@ router.post('/forgot-password', [emailBlastLimiter, forgotPasswordSchema], forgo
 
 // Reset password
 router.post('/reset-password/:token', resetPasswordSchema, resetPassword)
+
+// Logout
+router.post('/logout', authMiddleware, logout)
 
 module.exports = router

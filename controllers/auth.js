@@ -4,6 +4,8 @@ const { Op } = require('sequelize')
 
 const User = require('../models/user')
 const UserModel = User()
+const BlacklistedToken = require('../models/blacklistedToken')
+const BlacklistedTokenModel = BlacklistedToken()
 
 const {
 	validateRequest,
@@ -95,6 +97,33 @@ exports.login = async (req, res, next) => {
 			message: 'Success login user',
 			data: { token: result },
 			code: 200,
+		})
+	} catch (error) {
+		if (!error.statusCode) {
+			error.statusCode = 500
+		}
+		next(error)
+	}
+}
+
+exports.logout = async (req, res, next) => {
+	try {
+		await UserModel.sequelize.transaction(async (t) => {
+			const token = req.headers.authorization || ''
+
+			const decoded = jwt.decode(token)
+
+			await BlacklistedTokenModel.create(
+				{
+					token,
+					expires: new Date(decoded.exp * 1000), // JWT exp is in seconds, convert to milliseconds
+				},
+				{ transaction: t }
+			)
+		})
+
+		res.status(200).json({
+			message: 'Success logout',
 		})
 	} catch (error) {
 		if (!error.statusCode) {
