@@ -2,10 +2,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { Op } = require('sequelize')
 
-const User = require('../models/user')
-const UserModel = User()
-const BlacklistedToken = require('../models/blacklistedToken')
-const BlacklistedTokenModel = BlacklistedToken()
+const { User: UserModel, BlacklistedToken: BlacklistedTokenModel } = require('../models/index')
 
 const {
 	validateRequest,
@@ -50,7 +47,7 @@ exports.register = async (req, res, next) => {
 				{ transaction: t }
 			)
 
-			await sendEmailVerification(req, verificationToken, email)
+			await sendEmailVerification(req, token, email)
 		})
 
 		res.status(201).json({
@@ -193,7 +190,7 @@ exports.resendVerification = async (req, res, next) => {
 
 			await user.save({ transaction: t })
 
-			await sendEmailVerification(req, verificationToken, email)
+			await sendEmailVerification(req, token, email)
 		})
 
 		res.status(200).json({
