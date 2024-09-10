@@ -1,7 +1,6 @@
 const { Op } = require('sequelize')
 
-const User = require('../models/user')
-const UserModel = User()
+const { User: UserModel } = require('../models/index')
 
 const {
 	validateUserNotExist,
