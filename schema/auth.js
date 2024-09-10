@@ -9,9 +9,9 @@ const {
 
 exports.registerSchema = checkSchema(
 	{
-		username: usernameSchema,
 		email: emailSchema,
 		password: passwordSchema,
+		username: usernameSchema,
 		fullname: fullnameSchema,
 	},
 	['body']
@@ -19,12 +19,7 @@ exports.registerSchema = checkSchema(
 
 exports.loginSchema = checkSchema(
 	{
-		username: {
-			notEmpty: {
-				bail: true,
-				errorMessage: 'Username is required',
-			},
-		},
+		email: emailSchema,
 		password: {
 			notEmpty: {
 				bail: true,

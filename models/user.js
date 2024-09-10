@@ -18,11 +18,6 @@ module.exports = () => {
 	}
 	User.init(
 		{
-			username: {
-				type: DataTypes.STRING,
-				allowNull: false,
-				unique: true,
-			},
 			email: {
 				type: DataTypes.STRING,
 				allowNull: false,
@@ -31,6 +26,12 @@ module.exports = () => {
 			password: {
 				type: DataTypes.STRING,
 				allowNull: false,
+			},
+
+			username: {
+				type: DataTypes.STRING,
+				allowNull: false,
+				unique: true,
 			},
 			fullname: {
 				type: DataTypes.STRING,

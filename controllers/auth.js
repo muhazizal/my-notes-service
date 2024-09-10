@@ -20,11 +20,11 @@ exports.register = async (req, res, next) => {
 		await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
 
-			const { username, email, password, fullname } = req.body
+			const { email, password, username, fullname } = req.body
 
 			let user = await UserModel.findOne({
 				where: {
-					[Op.or]: [{ username }, { email }],
+					[Op.or]: [{ email }, { username }],
 				},
 				transaction: t,
 			})
@@ -37,9 +37,9 @@ exports.register = async (req, res, next) => {
 
 			user = await UserModel.create(
 				{
-					username,
 					email,
 					password: hashedPassword,
+					username,
 					fullname,
 					verificationToken: token,
 					verificationTokenExpires: tokenExpires,
@@ -67,11 +67,11 @@ exports.login = async (req, res, next) => {
 		const result = await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
 
-			const { username, password } = req.body
+			const { email, password } = req.body
 
 			const user = await UserModel.findOne({
 				where: {
-					username,
+					email,
 				},
 				transaction: t,
 			})
