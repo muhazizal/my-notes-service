@@ -1,12 +1,18 @@
-const Note = require('../models/note')
-const model = Note()
+const { Note: NoteModel, User: UserModel } = require('../models/index')
 
 const { validateRequest, validateNoteExist } = require('../validator/note')
+const { validateUserNotExist } = require('../validator/auth')
 
 exports.getNotes = async (req, res, next) => {
 	try {
-		const result = await model.sequelize.transaction(async (t) => {
-			return await model.findAll({
+		const result = await NoteModel.sequelize.transaction(async (t) => {
+			const { id: userId } = req.user
+
+			return await NoteModel.findAll({
+				where: {
+					userId,
+				},
+				attributes: ['id', 'title', 'description', 'updatedAt'],
 				transaction: t,
 			})
 		})
@@ -26,12 +32,17 @@ exports.getNotes = async (req, res, next) => {
 
 exports.createNote = async (req, res, next) => {
 	try {
-		const result = await model.sequelize.transaction(async (t) => {
+		const result = await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
 
 			const { title, description } = req.body
+			const { id: userId } = req.user
 
-			return await model.create(
+			const user = await UserModel.findByPk(userId, { transaction: t })
+
+			validateUserNotExist(user)
+
+			return await user.createNote(
 				{
 					title,
 					description,
@@ -55,12 +66,20 @@ exports.createNote = async (req, res, next) => {
 
 exports.getNoteById = async (req, res, next) => {
 	try {
-		const result = await model.sequelize.transaction(async (t) => {
+		const result = await NoteModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
 
 			const { id } = req.params
+			const { id: userId } = req.user
 
-			const note = await model.findByPk(id, { transaction: t })
+			const note = await NoteModel.findOne({
+				where: {
+					id,
+					userId,
+				},
+				attributes: ['id', 'title', 'description', 'updatedAt'],
+				transaction: t,
+			})
 
 			validateNoteExist(note)
 
@@ -82,13 +101,21 @@ exports.getNoteById = async (req, res, next) => {
 
 exports.updateNote = async (req, res, next) => {
 	try {
-		const result = await model.sequelize.transaction(async (t) => {
+		const result = await NoteModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
 
 			const { id } = req.params
 			const { title, description } = req.body
+			const { id: userId } = req.user
 
-			const note = await model.findByPk(id, { transaction: t })
+			const note = await NoteModel.findOne({
+				where: {
+					id,
+					userId,
+				},
+				attributes: ['id', 'title', 'description', 'updatedAt'],
+				transaction: t,
+			})
 
 			validateNoteExist(note)
 
@@ -113,10 +140,17 @@ exports.updateNote = async (req, res, next) => {
 
 exports.deleteNote = async (req, res, next) => {
 	try {
-		await model.sequelize.transaction(async (t) => {
+		await NoteModel.sequelize.transaction(async (t) => {
 			const { id } = req.params
+			const { id: userId } = req.user
 
-			const note = await model.findByPk(id, { transaction: t })
+			const note = await NoteModel.findOne({
+				where: {
+					id,
+					userId,
+				},
+				transaction: t,
+			})
 
 			validateNoteExist(note)
 
