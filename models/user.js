@@ -10,7 +10,10 @@ module.exports = () => {
 		 * The `models/index` file will call this method automatically.
 		 */
 		static associate(models) {
-			// define association here
+			this.hasMany(models.Note, {
+				foreignKey: 'userId',
+				as: 'notes',
+			})
 		}
 	}
 	User.init(
