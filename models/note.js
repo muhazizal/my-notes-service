@@ -25,6 +25,12 @@ module.exports = () => {
 		{
 			sequelize,
 			modelName: 'Note',
+			indexes: [
+				{
+					name: 'Notes_user_id_index',
+					fields: ['userId'],
+				},
+			],
 		}
 	)
 	return Note
