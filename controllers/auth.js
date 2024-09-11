@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { Op } = require('sequelize')
 
-const { User: UserModel, BlacklistedToken: BlacklistedTokenModel } = require('../models/index')
+const { User: UserModel } = require('../models/index')
 
 const {
 	validateRequest,
@@ -109,14 +109,6 @@ exports.logout = async (req, res, next) => {
 			const token = req.headers.authorization || ''
 
 			const decoded = jwt.decode(token)
-
-			await BlacklistedTokenModel.create(
-				{
-					token,
-					expires: new Date(decoded.exp * 1000), // JWT exp is in seconds, convert to milliseconds
-				},
-				{ transaction: t }
-			)
 		})
 
 		res.status(200).json({
