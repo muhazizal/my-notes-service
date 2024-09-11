@@ -12,6 +12,12 @@ module.exports = () => {
 	}
 	Session.init(
 		{
+			sid: {
+				type: DataTypes.STRING(36),
+				defaultValue: DataTypes.UUIDV4,
+				allowNull: false,
+				primaryKey: true,
+			},
 			accessToken: {
 				type: DataTypes.STRING,
 				allowNull: false,
