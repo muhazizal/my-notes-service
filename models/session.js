@@ -20,10 +20,6 @@ module.exports = () => {
 				type: DataTypes.STRING,
 				allowNull: false,
 			},
-			refreshTokenExpires: {
-				type: DataTypes.DATE,
-				allowNull: false,
-			},
 		},
 		{
 			sequelize,

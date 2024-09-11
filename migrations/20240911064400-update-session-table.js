@@ -8,14 +8,12 @@ module.exports = {
 			await queryInterface.addColumn('Sessions', 'accessToken', {
 				type: Sequelize.STRING,
 				allowNull: false,
+				unique: true,
 			})
 			await queryInterface.addColumn('Sessions', 'refreshToken', {
 				type: Sequelize.STRING,
 				allowNull: false,
-			})
-			await queryInterface.addColumn('Sessions', 'refreshTokenExpires', {
-				type: Sequelize.DATE,
-				allowNull: false,
+				unique: true,
 			})
 			await t.commit()
 		} catch (error) {
@@ -29,7 +27,6 @@ module.exports = {
 		try {
 			await queryInterface.removeColumn('Sessions', 'accessToken')
 			await queryInterface.removeColumn('Sessions', 'refreshToken')
-			await queryInterface.removeColumn('Sessions', 'refreshTokenExpires')
 			await t.commit()
 		} catch (error) {
 			await t.rollback()
