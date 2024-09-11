@@ -40,14 +40,7 @@ exports.validateUserVerified = (isVerified) => {
 }
 exports.validateTokenNotExist = (token) => {
 	if (!token) {
-		const error = new Error('No token, authorization denied')
-		error.statusCode = 401
-		throw error
-	}
-}
-exports.validateTokenIsBlacklisted = (token) => {
-	if (token) {
-		const error = new Error('Token has been blacklisted. Please log in again.')
+		const error = new Error('Access token is not found, authorization denied')
 		error.statusCode = 401
 		throw error
 	}
@@ -63,6 +56,13 @@ exports.validateEmailExist = (userEmail, payload) => {
 	if (userEmail === payload) {
 		const error = new Error('Email is already exist')
 		error.statusCode = 401
+		throw error
+	}
+}
+exports.validateSessionNotExist = (session) => {
+	if (!session) {
+		const error = new Error('Invalid access token')
+		error.statusCode = 403
 		throw error
 	}
 }
