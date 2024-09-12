@@ -7,14 +7,11 @@ const { validateTokenNotExist, validateSessionNotExist } = require('../validator
 const { createAccessToken, setAccessTokenCookie, createRefreshToken } = require('../utils/session')
 
 const handleVerifyJwtSession = async (res, accessToken) => {
-	const transaction = await SessionModel.sequelize.transaction()
-
 	// Check session
 	const session = await SessionModel.findOne({
 		where: {
 			accessToken,
 		},
-		transaction,
 	})
 
 	validateSessionNotExist(session)
@@ -30,11 +27,10 @@ const handleVerifyJwtSession = async (res, accessToken) => {
 			const newAccessToken = createAccessToken(userId)
 			const newRefreshToken = createRefreshToken(userId)
 
-			// update access token in session
+			// update access token & refresh token in session
 			session.accessToken = newAccessToken
 			session.refreshToken = newRefreshToken
-
-			await session.save({ transaction: t })
+			await session.save()
 
 			// update access token in cookie
 			setAccessTokenCookie(res, newAccessToken)
@@ -47,15 +43,19 @@ const handleVerifyJwtSession = async (res, accessToken) => {
 }
 
 const authMiddleware = async (req, res, next) => {
+	const transaction = await SessionModel.sequelize.transaction()
 	try {
 		const { access_token } = req.cookies
 
 		validateTokenNotExist(access_token)
 
-		req.userId = await handleVerifyJwtSession(res, access_token)
+		req.userId = await handleVerifyJwtSession(res, access_token, transaction)
+
+		await transaction.commit()
 
 		next()
 	} catch (error) {
+		await transaction.rollback()
 		if (!error.statusCode) {
 			error.statusCode = 500
 		}

@@ -51,6 +51,6 @@ router.post('/reset-password/:token', resetPasswordSchema, resetPassword)
 router.post('/logout', authMiddleware, logout)
 
 // Check auth session
-router.get('/check-auth-session', checkAuthSession)
+router.get('/check-auth-session', authMiddleware, checkAuthSession)
 
 module.exports = router
