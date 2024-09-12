@@ -46,11 +46,11 @@ const handleVerifyJwtSession = async (res, accessToken) => {
 
 const authMiddleware = async (req, res, next) => {
 	try {
-		const { accessToken } = req.cookies
+		const { access_token } = req.cookies
 
-		validateTokenNotExist(accessToken)
+		validateTokenNotExist(access_token)
 
-		req.userId = handleVerifyJwtSession(res, accessToken)
+		req.userId = handleVerifyJwtSession(res, access_token)
 
 		next()
 	} catch (error) {

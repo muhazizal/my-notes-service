@@ -1,5 +1,4 @@
 const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
 const { Op } = require('sequelize')
 
 const { User: UserModel } = require('../models/index')
@@ -14,6 +13,14 @@ const {
 
 const { sendEmailVerification, sendEmailResetPassword } = require('../utils/send-email')
 const { generateToken } = require('../utils/token')
+const {
+	createAccessToken,
+	createRefreshToken,
+	storeAuthSession,
+	destroyAuthSession,
+	setAccessTokenCookie,
+	clearAccessTokenCookie,
+} = require('../utils/session')
 
 exports.register = async (req, res, next) => {
 	try {
@@ -64,7 +71,7 @@ exports.register = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
 	try {
-		const result = await UserModel.sequelize.transaction(async (t) => {
+		await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
 
 			const { email, password } = req.body
@@ -82,17 +89,16 @@ exports.login = async (req, res, next) => {
 
 			validatePasswordNotMatch(isMatch)
 
-			const jwtPayload = {
-				user: {
-					id: user.id,
-				},
-			}
-			return jwt.sign(jwtPayload, process.env.JWT_SECRET, { expiresIn: '1d' })
+			const accessToken = createAccessToken(user.id)
+			const refreshToken = createRefreshToken(user.id)
+
+			await storeAuthSession(accessToken, refreshToken)
+
+			setAccessTokenCookie(res, accessToken)
 		})
 
 		res.status(200).json({
 			message: 'Success login user',
-			data: { token: result },
 			code: 200,
 		})
 	} catch (error) {
@@ -105,14 +111,21 @@ exports.login = async (req, res, next) => {
 
 exports.logout = async (req, res, next) => {
 	try {
-		await UserModel.sequelize.transaction(async (t) => {
-			const token = req.headers.authorization || ''
+		const { access_token } = req.cookies
 
-			const decoded = jwt.decode(token)
-		})
+		req.session.destroy(async (err) => {
+			if (err) {
+				throw err
+			}
 
-		res.status(200).json({
-			message: 'Success logout',
+			await destroyAuthSession(access_token)
+
+			clearAccessTokenCookie(res)
+
+			res.status(200).json({
+				message: 'Success logout user',
+				code: 200,
+			})
 		})
 	} catch (error) {
 		if (!error.statusCode) {
@@ -120,6 +133,15 @@ exports.logout = async (req, res, next) => {
 		}
 		next(error)
 	}
+}
+
+exports.checkAuthSession = (req, res, next) => {
+	res.json({
+		message: 'Current auth session',
+		session: req.session,
+		headers: req.headers,
+		cookies: req.cookies,
+	})
 }
 
 exports.verify = async (req, res, next) => {

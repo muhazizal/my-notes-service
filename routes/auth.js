@@ -8,6 +8,7 @@ const {
 	forgotPassword,
 	resetPassword,
 	logout,
+	checkAuthSession,
 } = require('../controllers/auth')
 
 const {
@@ -48,5 +49,8 @@ router.post('/reset-password/:token', resetPasswordSchema, resetPassword)
 
 // Logout
 router.post('/logout', authMiddleware, logout)
+
+// Check auth session
+router.get('/check-auth-session', checkAuthSession)
 
 module.exports = router
