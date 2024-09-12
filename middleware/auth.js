@@ -4,7 +4,7 @@ const { Session: SessionModel } = require('../models/index')
 
 const { validateTokenNotExist, validateSessionNotExist } = require('../validator/auth')
 
-const { createAccessToken, setAccessTokenCookie } = require('../utils/session')
+const { createAccessToken, setAccessTokenCookie, createRefreshToken } = require('../utils/session')
 
 const handleVerifyJwtSession = async (res, accessToken) => {
 	const transaction = await SessionModel.sequelize.transaction()
@@ -19,18 +19,20 @@ const handleVerifyJwtSession = async (res, accessToken) => {
 
 	validateSessionNotExist(session)
 
-	// Check access token, if valid return user id
+	// Check access token
 	return jwt.verify(session.accessToken, process.env.JWT_SECRET, async (error, decoded) => {
 		// Handle access token expired
 		if (error && error.name === 'TokenExpiredError') {
 			// Check refresh token
 			const { userId } = jwt.verify(session.refreshToken, process.env.JWT_REFRESH_SECRET)
 
-			// if valid generate new access token
+			// generate new access token & refresh token
 			const newAccessToken = createAccessToken(userId)
+			const newRefreshToken = createRefreshToken(userId)
 
 			// update access token in session
 			session.accessToken = newAccessToken
+			session.refreshToken = newRefreshToken
 
 			await session.save({ transaction: t })
 
@@ -50,7 +52,7 @@ const authMiddleware = async (req, res, next) => {
 
 		validateTokenNotExist(access_token)
 
-		req.userId = handleVerifyJwtSession(res, access_token)
+		req.userId = await handleVerifyJwtSession(res, access_token)
 
 		next()
 	} catch (error) {
