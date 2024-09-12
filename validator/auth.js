@@ -40,7 +40,7 @@ exports.validateUserVerified = (isVerified) => {
 }
 exports.validateTokenNotExist = (token) => {
 	if (!token) {
-		const error = new Error('Access token is not found, authorization denied')
+		const error = new Error('Invalid access token')
 		error.statusCode = 401
 		throw error
 	}
@@ -61,7 +61,7 @@ exports.validateEmailExist = (userEmail, payload) => {
 }
 exports.validateSessionNotExist = (session) => {
 	if (!session) {
-		const error = new Error('Invalid access token')
+		const error = new Error('Session Expired')
 		error.statusCode = 403
 		throw error
 	}
