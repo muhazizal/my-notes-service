@@ -8,15 +8,19 @@ exports.createAccessToken = (userId) => {
 }
 
 exports.createRefreshToken = (userId) => {
-	return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' })
+	return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, { expiresIn: '1d' })
 }
 
 exports.storeAuthSession = async (accessToken, refreshToken) => {
 	try {
 		await SessionModel.sequelize.transaction(async (t) => {
+			const expires = new Date()
+			expires.setDate(expires.getDate() + 1) // 1d
+
 			await SessionModel.create(
 				{
 					sid: uuidv4(),
+					expires,
 					accessToken,
 					refreshToken,
 				},
@@ -54,7 +58,7 @@ exports.setAccessTokenCookie = (res, access_token) => {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
 		sameSite: 'lax',
-		maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Day
+		maxAge: 1 * 24 * 60 * 60 * 1000, // 1d
 	})
 }
 

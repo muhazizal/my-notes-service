@@ -18,6 +18,10 @@ module.exports = () => {
 				allowNull: false,
 				primaryKey: true,
 			},
+			expires: {
+				type: DataTypes.DATE,
+				allowNull: true,
+			},
 			accessToken: {
 				type: DataTypes.STRING,
 				allowNull: false,
