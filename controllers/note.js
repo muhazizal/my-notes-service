@@ -1,12 +1,13 @@
 const { Note: NoteModel, User: UserModel } = require('../models/index')
 
 const { validateRequest, validateNoteExist } = require('../validator/note')
-const { validateUserNotExist } = require('../validator/auth')
+
+const { pickAttributes } = require('../utils/filter')
 
 exports.getNotes = async (req, res, next) => {
 	try {
 		const result = await NoteModel.sequelize.transaction(async (t) => {
-			const { id: userId } = req.user
+			const { userId } = req
 
 			return await NoteModel.findAll({
 				where: {
@@ -32,23 +33,18 @@ exports.getNotes = async (req, res, next) => {
 
 exports.createNote = async (req, res, next) => {
 	try {
-		const result = await UserModel.sequelize.transaction(async (t) => {
+		const result = await NoteModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
 
 			const { title, description } = req.body
-			const { id: userId } = req.user
+			const { userId } = req
 
-			const user = await UserModel.findByPk(userId, { transaction: t })
-
-			validateUserNotExist(user)
-
-			return await user.createNote(
-				{
-					title,
-					description,
-				},
-				{ transaction: t }
+			const newNote = await NoteModel.create(
+				{ title, description, userId },
+				{ attributes: ['id', 'title', 'description', 'createdAt'], transaction: t }
 			)
+
+			return pickAttributes(newNote.dataValues, ['id', 'title', 'description', 'createdAt'])
 		})
 
 		res.status(201).json({
@@ -70,14 +66,14 @@ exports.getNoteById = async (req, res, next) => {
 			validateRequest(req, res)
 
 			const { id } = req.params
-			const { id: userId } = req.user
+			const { userId } = req
 
 			const note = await NoteModel.findOne({
 				where: {
 					id,
 					userId,
 				},
-				attributes: ['id', 'title', 'description', 'updatedAt'],
+				attributes: ['id', 'title', 'description', 'createdAt', 'updatedAt'],
 				transaction: t,
 			})
 
@@ -106,7 +102,7 @@ exports.updateNote = async (req, res, next) => {
 
 			const { id } = req.params
 			const { title, description } = req.body
-			const { id: userId } = req.user
+			const { userId } = req
 
 			const note = await NoteModel.findOne({
 				where: {
@@ -142,7 +138,7 @@ exports.deleteNote = async (req, res, next) => {
 	try {
 		await NoteModel.sequelize.transaction(async (t) => {
 			const { id } = req.params
-			const { id: userId } = req.user
+			const { userId } = req
 
 			const note = await NoteModel.findOne({
 				where: {
