@@ -9,12 +9,12 @@ const {
 	validateEmailExist,
 } = require('../validator/auth')
 
-exports.getProfileById = async (req, res, next) => {
+exports.getProfile = async (req, res, next) => {
 	try {
 		const result = await UserModel.sequelize.transaction(async (t) => {
-			const { id } = req.params
+			const { userId } = req
 
-			const user = await UserModel.findByPk(id, {
+			const user = await UserModel.findByPk(userId, {
 				transaction: t,
 				attributes: ['id', 'username', 'email', 'fullname', 'isVerified'],
 			})
@@ -44,13 +44,13 @@ exports.updateProfile = async (req, res, next) => {
 		const result = await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
 
-			const { id } = req.params
+			const { userId } = req
 			const { username, email, fullname } = req.body
 
 			const existingUser = await UserModel.findOne({
 				where: {
 					id: {
-						[Op.ne]: id, // check id is not equal with user id
+						[Op.ne]: userId, // check id is not equal with user id
 					},
 					[Op.or]: [{ username }, { email }], // check username or email is exist
 				},
@@ -62,7 +62,7 @@ exports.updateProfile = async (req, res, next) => {
 				validateEmailExist(existingUser.email, email)
 			}
 
-			const user = await UserModel.findByPk(id, {
+			const user = await UserModel.findByPk(userId, {
 				attributes: ['id', 'username', 'email', 'fullname', 'isVerified'],
 				transaction: t,
 			})
@@ -73,6 +73,7 @@ exports.updateProfile = async (req, res, next) => {
 				user.isVerified = false
 				message = 'Success update profile, please verify your new email'
 			}
+
 			user.username = username
 			user.email = email
 			user.fullname = fullname
@@ -96,9 +97,9 @@ exports.updateProfile = async (req, res, next) => {
 exports.deleteAccount = async (req, res, next) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
-			const { id } = req.params
+			const { userId } = req
 
-			const user = await UserModel.findByPk(id, {
+			const user = await UserModel.findByPk(userId, {
 				transaction: t,
 			})
 
