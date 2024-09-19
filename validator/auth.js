@@ -38,6 +38,13 @@ exports.validateUserVerified = (isVerified) => {
 		throw error
 	}
 }
+exports.validateUserNotVerified = (isVerified) => {
+	if (!isVerified) {
+		const error = new Error('User is not verified')
+		error.statusCode = 401
+		throw error
+	}
+}
 exports.validateTokenNotExist = (token) => {
 	if (!token) {
 		const error = new Error('Invalid access token')

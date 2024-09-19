@@ -9,6 +9,7 @@ const {
 	validateUserNotExist,
 	validatePasswordNotMatch,
 	validateUserVerified,
+	validateUserNotVerified,
 } = require('../validator/auth')
 
 const { sendEmailVerification, sendEmailResetPassword } = require('../utils/send-email')
@@ -84,6 +85,7 @@ exports.login = async (req, res, next) => {
 			})
 
 			validateUserNotExist(user)
+			validateUserNotVerified(user.isVerified)
 
 			const isMatch = await bcrypt.compare(password, user.password)
 
