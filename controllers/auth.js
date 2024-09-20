@@ -270,14 +270,12 @@ exports.resetPassword = async (req, res, next) => {
 			const user = await UserModel.findOne({
 				where: {
 					resetPasswordToken: token,
-					resetPasswordTokenExpires: {
-						[Op.gt]: Date.now().toString(),
-					},
 				},
 				transaction: t,
 			})
 
 			validateUserNotExist(user, 401)
+			validateVerifyTokenExpired(user.resetPasswordTokenExpires)
 
 			const salt = await bcrypt.genSalt(10)
 			const hashedPassword = await bcrypt.hash(password, salt)
