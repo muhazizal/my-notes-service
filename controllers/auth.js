@@ -188,11 +188,11 @@ exports.resendVerification = async (req, res, next) => {
 		await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
 
-			const { email } = req.body
+			const { token } = req.body
 
 			const user = await UserModel.findOne({
 				where: {
-					email,
+					verificationToken: token,
 				},
 				transaction: t,
 			})
@@ -200,14 +200,14 @@ exports.resendVerification = async (req, res, next) => {
 			validateUserNotExist(user)
 			validateUserVerified(user.isVerified)
 
-			const { token, tokenExpires } = generateToken()
+			const { token: newToken, tokenExpires } = generateToken()
 
-			user.verificationToken = token
+			user.verificationToken = newToken
 			user.verificationTokenExpires = tokenExpires
 
 			await user.save({ transaction: t })
 
-			await sendEmailVerification(req, token, email)
+			await sendEmailVerification(req, newToken, user.email)
 		})
 
 		res.status(200).json({

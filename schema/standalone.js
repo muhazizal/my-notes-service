@@ -12,6 +12,7 @@ exports.usernameSchema = {
 		errorMessage: 'Username must be at least 3 characters long',
 	},
 }
+
 exports.emailSchema = {
 	notEmpty: {
 		bail: true,
@@ -21,6 +22,7 @@ exports.emailSchema = {
 		errorMessage: 'Email is not valid',
 	},
 }
+
 exports.passwordSchema = {
 	trim: true,
 	notEmpty: {
@@ -34,9 +36,27 @@ exports.passwordSchema = {
 		errorMessage: 'Password must be at least 5 characters long',
 	},
 }
+
 exports.fullnameSchema = {
 	notEmpty: {
 		bail: true,
 		errorMessage: 'Fullname is required',
+	},
+}
+
+exports.tokenSchema = {
+	exists: {
+		bail: true,
+		errorMessage: 'Token is required',
+	},
+	isLength: {
+		options: { min: 64, max: 64 },
+		bail: true,
+		errorMessage: 'Token must be 64 characters long',
+	},
+	matches: {
+		options: /^[0-9a-f]{64}$/,
+		bail: true,
+		errorMessage: 'Token must be a valid hex string',
 	},
 }

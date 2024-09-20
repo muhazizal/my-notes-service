@@ -5,6 +5,7 @@ const {
 	emailSchema,
 	passwordSchema,
 	fullnameSchema,
+	tokenSchema,
 } = require('../schema/standalone')
 
 exports.registerSchema = checkSchema(
@@ -30,29 +31,16 @@ exports.loginSchema = checkSchema(
 	['body']
 )
 
-exports.verifySchema = checkSchema({
-	token: {
-		in: 'params',
-		exists: {
-			bail: true,
-			errorMessage: 'Token is required',
-		},
-		isLength: {
-			options: { min: 64, max: 64 },
-			bail: true,
-			errorMessage: 'Token must be 64 characters long',
-		},
-		matches: {
-			options: /^[0-9a-f]{64}$/,
-			bail: true,
-			errorMessage: 'Token must be a valid hex string',
-		},
+exports.verifySchema = checkSchema(
+	{
+		token: tokenSchema,
 	},
-})
+	['params']
+)
 
 exports.resendVerificationSchema = checkSchema(
 	{
-		email: emailSchema,
+		token: tokenSchema,
 	},
 	['body']
 )
