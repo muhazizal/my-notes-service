@@ -13,21 +13,21 @@ exports.validateRequest = (req, res) => {
 exports.validateUserExist = (user) => {
 	if (user) {
 		const error = new Error('User already exists')
-		error.statusCode = 401
+		error.statusCode = 422
 		throw error
 	}
 }
 exports.validateUserNotExist = (user) => {
 	if (!user) {
 		const error = new Error('Invalid Credentials')
-		error.statusCode = 401
+		error.statusCode = 422
 		throw error
 	}
 }
 exports.validatePasswordNotMatch = (isMatch) => {
 	if (!isMatch) {
 		const error = new Error('Invalid Credentials')
-		error.statusCode = 401
+		error.statusCode = 422
 		throw error
 	}
 }
@@ -41,7 +41,7 @@ exports.validateUserVerified = (isVerified) => {
 exports.validateUserNotVerified = (isVerified) => {
 	if (!isVerified) {
 		const error = new Error('User is not verified')
-		error.statusCode = 401
+		error.statusCode = 422
 		throw error
 	}
 }
@@ -55,14 +55,14 @@ exports.validateTokenNotExist = (token) => {
 exports.validateUsernameExist = (username, payload) => {
 	if (username === payload) {
 		const error = new Error('Username is already exist')
-		error.statusCode = 401
+		error.statusCode = 422
 		throw error
 	}
 }
 exports.validateEmailExist = (userEmail, payload) => {
 	if (userEmail === payload) {
 		const error = new Error('Email is already exist')
-		error.statusCode = 401
+		error.statusCode = 422
 		throw error
 	}
 }
