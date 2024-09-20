@@ -73,3 +73,10 @@ exports.validateSessionNotExist = (session) => {
 		throw error
 	}
 }
+exports.validateVerifyTokenExpired = (user) => {
+	if (!user) {
+		const error = new Error('Token Expired')
+		error.statusCode = 401
+		throw error
+	}
+}

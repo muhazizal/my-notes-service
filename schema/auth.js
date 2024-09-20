@@ -30,6 +30,26 @@ exports.loginSchema = checkSchema(
 	['body']
 )
 
+exports.verifySchema = checkSchema({
+	token: {
+		in: 'body',
+		exists: {
+			bail: true,
+			errorMessage: 'Token is required',
+		},
+		isLength: {
+			options: { min: 64, max: 64 },
+			bail: true,
+			errorMessage: 'Token must be 64 characters long',
+		},
+		matches: {
+			options: /^[0-9a-f]{64}$/,
+			bail: true,
+			errorMessage: 'Token must be a valid hex string',
+		},
+	},
+})
+
 exports.resendVerificationSchema = checkSchema(
 	{
 		email: emailSchema,

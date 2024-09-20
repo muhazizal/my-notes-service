@@ -10,6 +10,7 @@ const {
 	validatePasswordNotMatch,
 	validateUserVerified,
 	validateUserNotVerified,
+	validateVerifyTokenExpired,
 } = require('../validator/auth')
 
 const { sendEmailVerification, sendEmailResetPassword } = require('../utils/send-email')
@@ -149,7 +150,7 @@ exports.checkAuthSession = (req, res, next) => {
 exports.verify = async (req, res, next) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
-			const { token } = req.params
+			const { token } = req.body
 
 			const user = await UserModel.findOne({
 				where: {
@@ -161,7 +162,7 @@ exports.verify = async (req, res, next) => {
 				transaction: t,
 			})
 
-			validateUserNotExist(user)
+			validateVerifyTokenExpired(user)
 
 			user.isVerified = true
 			user.verificationToken = null

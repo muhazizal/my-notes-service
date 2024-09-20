@@ -14,6 +14,7 @@ const {
 const {
 	registerSchema,
 	loginSchema,
+	verifySchema,
 	resendVerificationSchema,
 	forgotPasswordSchema,
 	resetPasswordSchema,
@@ -32,7 +33,7 @@ router.put('/register', registerSchema, register)
 router.post('/login', loginSchema, login)
 
 // Verify user
-router.get('/verify/:token', verify)
+router.get('/verify', verifySchema, verify)
 
 // Resend verification
 router.post(
