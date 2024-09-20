@@ -163,6 +163,7 @@ exports.verify = async (req, res, next) => {
 			})
 
 			validateVerifyTokenExpired(user)
+			validateUserVerified(user.isVerified)
 
 			user.isVerified = true
 			user.verificationToken = null
