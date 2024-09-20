@@ -76,7 +76,7 @@ exports.validateSessionNotExist = (session) => {
 exports.validateVerifyTokenExpired = (user) => {
 	if (!user) {
 		const error = new Error('Token Expired')
-		error.statusCode = 401
+		error.statusCode = 422
 		throw error
 	}
 }

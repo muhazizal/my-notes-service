@@ -33,7 +33,7 @@ router.put('/register', registerSchema, register)
 router.post('/login', loginSchema, login)
 
 // Verify user
-router.get('/verify', verifySchema, verify)
+router.get('/verify/:token', verifySchema, verify)
 
 // Resend verification
 router.post(

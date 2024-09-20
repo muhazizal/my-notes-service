@@ -150,7 +150,7 @@ exports.checkAuthSession = (req, res, next) => {
 exports.verify = async (req, res, next) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
-			const { token } = req.body
+			const { token } = req.params
 
 			const user = await UserModel.findOne({
 				where: {

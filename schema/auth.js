@@ -32,7 +32,7 @@ exports.loginSchema = checkSchema(
 
 exports.verifySchema = checkSchema({
 	token: {
-		in: 'body',
+		in: 'params',
 		exists: {
 			bail: true,
 			errorMessage: 'Token is required',
