@@ -17,10 +17,10 @@ exports.validateUserExist = (user) => {
 		throw error
 	}
 }
-exports.validateUserNotExist = (user) => {
+exports.validateUserNotExist = (user, code = 422) => {
 	if (!user) {
 		const error = new Error('Invalid Credentials')
-		error.statusCode = 422
+		error.statusCode = code
 		throw error
 	}
 }
@@ -73,8 +73,8 @@ exports.validateSessionNotExist = (session) => {
 		throw error
 	}
 }
-exports.validateVerifyTokenExpired = (user) => {
-	if (!user) {
+exports.validateVerifyTokenExpired = (expires) => {
+	if (expires >= Date.now().toString()) {
 		const error = new Error('Token Expired')
 		error.statusCode = 422
 		throw error

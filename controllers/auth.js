@@ -155,15 +155,13 @@ exports.verify = async (req, res, next) => {
 			const user = await UserModel.findOne({
 				where: {
 					verificationToken: token,
-					verificationTokenExpires: {
-						[Op.gt]: Date.now().toString(),
-					},
 				},
 				transaction: t,
 			})
 
-			validateVerifyTokenExpired(user)
+			validateUserNotExist(user, 401)
 			validateUserVerified(user.isVerified)
+			validateVerifyTokenExpired(user.verificationTokenExpires)
 
 			user.isVerified = true
 			user.verificationToken = null
@@ -198,7 +196,7 @@ exports.resendVerification = async (req, res, next) => {
 				transaction: t,
 			})
 
-			validateUserNotExist(user)
+			validateUserNotExist(user, 401)
 			validateUserVerified(user.isVerified)
 
 			const { token: newToken, tokenExpires } = generateToken()
@@ -237,7 +235,7 @@ exports.forgotPassword = async (req, res, next) => {
 				transaction: t,
 			})
 
-			validateUserNotExist(user)
+			validateUserNotExist(user, 422)
 
 			const { token, tokenExpires } = generateToken()
 
@@ -279,7 +277,7 @@ exports.resetPassword = async (req, res, next) => {
 				transaction: t,
 			})
 
-			validateUserNotExist(user)
+			validateUserNotExist(user, 401)
 
 			const salt = await bcrypt.genSalt(10)
 			const hashedPassword = await bcrypt.hash(password, salt)
