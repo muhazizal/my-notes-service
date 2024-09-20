@@ -12,17 +12,30 @@ const createTransporter = () => {
 }
 
 exports.sendEmailVerification = async (req, verificationToken, email) => {
-	const verificationUrl = `${req.protocol}://${req.get(
-		'host'
-	)}/api/auth/verify/${verificationToken}`
+	// BE rest api
+	// const verificationUrl = `${req.protocol}://${req.get(
+	// 	'host'
+	// )}/api/auth/verify/${verificationToken}`
+
+	// FE verification url
+	const verificationUrl = `${process.env.VERIFY_URL}/${verificationToken}`
+
+	const emailHtml = `
+			<h1>Email Verification</h1>
+			<p>Thank you for registering. Please click the button below to verify your email:</p>
+			<a href="${verificationUrl}" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; border-radius: 5px;">
+					Verify Email
+			</a>
+			<p>If you did not create an account, please ignore this email.</p>
+	`
 
 	const { transporter } = createTransporter()
 
 	const mailOptions = {
 		from: process.env.EMAIL_USER,
 		to: email,
-		subject: 'My Shop - Email Verification',
-		text: `Welcome to My Shop, please verify your email by clicking the following URL: ${verificationUrl}`,
+		subject: 'My Notes - Email Verification',
+		html: emailHtml,
 	}
 
 	await transporter.sendMail(mailOptions)
