@@ -42,9 +42,23 @@ exports.sendEmailVerification = async (req, verificationToken, email) => {
 }
 
 exports.sendEmailResetPassword = async (req, resetPasswordToken, email) => {
-	const resetPasswordUrl = `${req.protocol}://${req.get(
-		'host'
-	)}/api/auth/reset-password/${resetPasswordToken}`
+	// BE rest api
+	// const resetPasswordUrl = `${req.protocol}://${req.get(
+	// 	'host'
+	// )}/api/auth/reset-password/${resetPasswordToken}`
+
+	// FE reset password url
+	const resetPasswordUrl = `${process.env.RESET_URL}/${resetPasswordToken}`
+
+	const emailHtml = `
+			<h1>Reset Password</h1>
+			<p>You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
+      Please click on the following link to complete the process:</p>
+			<a href="${resetPasswordUrl}" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; border-radius: 5px;">
+					Reset Password
+			</a>
+			<p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+	`
 
 	const { transporter } = createTransporter()
 
@@ -52,10 +66,7 @@ exports.sendEmailResetPassword = async (req, resetPasswordToken, email) => {
 		from: process.env.EMAIL_USER,
 		to: email,
 		subject: 'My Shop - Reset Password',
-		text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
-        Please click on the following link, or paste this into your browser to complete the process:\n\n
-        ${resetPasswordUrl}\n\n
-        If you did not request this, please ignore this email and your password will remain unchanged.\n`,
+		html: emailHtml,
 	}
 
 	await transporter.sendMail(mailOptions)
