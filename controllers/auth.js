@@ -226,25 +226,25 @@ exports.forgotPassword = async (req, res, next) => {
 		await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
 
-			const { token } = req.params
+			const { email } = req.body
 
 			const user = await UserModel.findOne({
 				where: {
-					resetPasswordToken: token,
+					email,
 				},
 				transaction: t,
 			})
 
 			validateUserNotExist(user, 422)
 
-			const { token: newToken, tokenExpires } = generateToken()
+			const { token, tokenExpires } = generateToken()
 
-			user.resetPasswordToken = newToken
+			user.resetPasswordToken = token
 			user.resetPasswordTokenExpires = tokenExpires
 
 			await user.save({ transaction: t })
 
-			await sendEmailResetPassword(req, newToken, email)
+			await sendEmailResetPassword(req, token, email)
 		})
 
 		res.status(200).json({

@@ -20,7 +20,7 @@ const {
 	resetPasswordSchema,
 } = require('../schema/auth')
 
-const { tokenBlastLimiter } = require('../utils/rate-limiter')
+const { tokenBlastLimiter, emailBlastLimiter } = require('../utils/rate-limiter')
 
 const { authMiddleware } = require('../middleware/auth')
 
@@ -43,7 +43,7 @@ router.post(
 )
 
 // Forgot password
-router.post('/forgot-password', [tokenBlastLimiter, forgotPasswordSchema], forgotPassword)
+router.post('/forgot-password', [emailBlastLimiter, forgotPasswordSchema], forgotPassword)
 
 // Reset password
 router.post('/reset-password/:token', resetPasswordSchema, resetPassword)

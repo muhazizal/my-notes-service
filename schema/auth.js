@@ -47,7 +47,7 @@ exports.resendVerificationSchema = checkSchema(
 
 exports.forgotPasswordSchema = checkSchema(
 	{
-		token: tokenSchema,
+		email: emailSchema,
 	},
 	['body']
 )
