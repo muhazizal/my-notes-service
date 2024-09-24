@@ -5,6 +5,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const expressSession = require('express-session')
+const cors = require('cors')
 const SequelizeStore = require('connect-session-sequelize')(expressSession.Store)
 
 const sequelize = require('./config/database')
@@ -41,6 +42,14 @@ app.use(bodyParser.urlencoded({ extended: false }))
 
 // Cookie Parser
 app.use(cookieParser())
+
+// Cors
+app.use(
+	cors({
+		origin: 'http://localhost:3000',
+		credentials: true,
+	})
+)
 
 // Routes
 app.use('/api/notes', noteRoutes)
