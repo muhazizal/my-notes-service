@@ -21,6 +21,23 @@ const SessionStore = new SequelizeStore({
 
 const app = express()
 
+// Cors
+app.use(
+	cors({
+		origin: true,
+		credentials: true,
+		methods: ['GET', 'PUT', 'POST', 'DELETE'],
+		allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'],
+	})
+)
+
+// Cookie Parser
+app.use(cookieParser())
+
+// Body Parser
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }))
+
 // Use session store
 app.use(
 	expressSession({
@@ -33,21 +50,6 @@ app.use(
 			secure: process.env.NODE_ENV === 'production',
 			sameSite: 'lax',
 		},
-	})
-)
-
-// Body Parser
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: false }))
-
-// Cookie Parser
-app.use(cookieParser())
-
-// Cors
-app.use(
-	cors({
-		origin: 'http://localhost:3000',
-		credentials: true,
 	})
 )
 
