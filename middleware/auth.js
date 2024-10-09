@@ -4,38 +4,59 @@ const { Session: SessionModel } = require('../models/index')
 
 const { validateTokenNotExist, validateSessionNotExist } = require('../validator/auth')
 
-const { createAccessToken, setAccessTokenCookie, createRefreshToken } = require('../utils/session')
+const {
+	createAccessToken,
+	createRefreshToken,
+	setAccessTokenCookie,
+	destroyAuthSession,
+	clearAccessTokenCookie,
+} = require('../utils/session')
 
 const handleVerifyJwtSession = async (res, accessToken) => {
-	// Check session
-	const session = await SessionModel.findOne({
-		where: {
-			accessToken,
-		},
-	})
-
-	validateSessionNotExist(session)
-
 	// Check access token
-	return jwt.verify(session.accessToken, process.env.JWT_SECRET, async (error, decoded) => {
+	return jwt.verify(accessToken, process.env.JWT_SECRET, async (error, decoded) => {
 		// Handle access token expired
 		if (error && error.name === 'TokenExpiredError') {
+			// Check session
+			const session = await SessionModel.findOne({
+				where: {
+					accessToken,
+				},
+			})
+
+			validateSessionNotExist(session)
+
 			// Check refresh token
-			const { userId } = jwt.verify(session.refreshToken, process.env.JWT_REFRESH_SECRET)
+			return jwt.verify(
+				session.refreshToken,
+				process.env.JWT_REFRESH_SECRET,
+				async (error, decoded) => {
+					// Handle refresh token expires
+					if (error && error.name === 'TokenExpiredError') {
+						await destroyAuthSession(session.accessToken)
 
-			// generate new access token & refresh token
-			const newAccessToken = createAccessToken(userId)
-			const newRefreshToken = createRefreshToken(userId)
+						clearAccessTokenCookie(res)
 
-			// update access token & refresh token in session
-			session.accessToken = newAccessToken
-			session.refreshToken = newRefreshToken
-			await session.save()
+						throw error
+					}
 
-			// update access token in cookie
-			setAccessTokenCookie(res, newAccessToken)
+					// generate new access token & refresh token
+					const newAccessToken = createAccessToken(decoded.userId)
+					const newRefreshToken = createRefreshToken(decoded.userId)
 
-			return userId
+					// update access token & refresh token in session
+					session.accessToken = newAccessToken
+					session.refreshToken = newRefreshToken
+
+					// save updated session token
+					await session.save()
+
+					// update access token in cookie
+					setAccessTokenCookie(res, newAccessToken)
+
+					return decoded.userId
+				}
+			)
 		}
 
 		return decoded.userId
@@ -49,7 +70,7 @@ const authMiddleware = async (req, res, next) => {
 
 		validateTokenNotExist(access_token)
 
-		req.userId = await handleVerifyJwtSession(res, access_token, transaction)
+		req.userId = await handleVerifyJwtSession(res, access_token)
 
 		await transaction.commit()
 
