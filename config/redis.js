@@ -12,7 +12,7 @@ const redisClient = createClient({
 const startRedisClient = async () => {
 	redisClient.on('error', (err) => {
 		consola.error({
-			message: `Redis error: ${process.env.APP_PORT}`,
+			message: err,
 			badge: true,
 		})
 	})
