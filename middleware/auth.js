@@ -77,10 +77,10 @@ const authMiddleware = async (req, res, next) => {
 		next()
 	} catch (error) {
 		await transaction.rollback()
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
