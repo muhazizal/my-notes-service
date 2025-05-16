@@ -20,8 +20,6 @@ const {
 	createRefreshToken,
 	storeAuthSession,
 	destroyAuthSession,
-	setAccessTokenCookie,
-	clearAccessTokenCookie,
 } = require('../utils/session')
 
 exports.register = async (req, res) => {
@@ -96,8 +94,6 @@ exports.login = async (req, res) => {
 			const refreshToken = createRefreshToken(user.id)
 
 			await storeAuthSession(accessToken, refreshToken)
-
-			setAccessTokenCookie(res, accessToken)
 		})
 
 		res.status(200).json({
@@ -116,19 +112,11 @@ exports.logout = async (req, res) => {
 	try {
 		const { access_token } = req.cookies
 
-		req.session.destroy(async (err) => {
-			if (err) {
-				throw err
-			}
+		await destroyAuthSession(access_token)
 
-			await destroyAuthSession(access_token)
-
-			clearAccessTokenCookie(res)
-
-			res.status(200).json({
-				message: 'Success logout user',
-				code: 200,
-			})
+		res.status(200).json({
+			message: 'Success logout user',
+			code: 200,
 		})
 	} catch (error) {
 		res.status(error.statusCode || 500).json({
@@ -141,7 +129,6 @@ exports.logout = async (req, res) => {
 exports.checkAuthSession = (req, res) => {
 	res.json({
 		message: 'Current auth session',
-		session: req.session,
 		headers: req.headers,
 		cookies: req.cookies,
 	})

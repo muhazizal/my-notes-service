@@ -52,21 +52,3 @@ exports.destroyAuthSession = async (accessToken) => {
 		throw error
 	}
 }
-
-exports.setAccessTokenCookie = (res, access_token) => {
-	res.cookie('access_token', access_token, {
-		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production',
-		sameSite: 'lax',
-		maxAge: 1 * 24 * 60 * 60 * 1000, // 1d
-	})
-}
-
-exports.clearAccessTokenCookie = (res) => {
-	res.clearCookie('access_token', {
-		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production',
-		sameSite: 'lax',
-		maxAge: 0,
-	})
-}
