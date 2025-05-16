@@ -9,7 +9,7 @@ const {
 	validateEmailExist,
 } = require('../validator/auth')
 
-exports.getProfile = async (req, res, next) => {
+exports.getProfile = async (req, res) => {
 	try {
 		const result = await UserModel.sequelize.transaction(async (t) => {
 			const { userId } = req
@@ -30,14 +30,14 @@ exports.getProfile = async (req, res, next) => {
 			code: 200,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.updateProfile = async (req, res, next) => {
+exports.updateProfile = async (req, res) => {
 	try {
 		let message = 'Success update profile'
 
@@ -87,14 +87,14 @@ exports.updateProfile = async (req, res, next) => {
 			code: 201,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.deleteAccount = async (req, res, next) => {
+exports.deleteAccount = async (req, res) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
 			const { userId } = req
@@ -115,9 +115,9 @@ exports.deleteAccount = async (req, res, next) => {
 			code: 200,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
