@@ -2,8 +2,6 @@ const jwt = require('jsonwebtoken')
 
 const { Session: SessionModel } = require('../models/index')
 
-const { validateSessionNotExist } = require('../validator/auth')
-
 const {
 	createAccessToken,
 	createRefreshToken,
