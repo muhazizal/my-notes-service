@@ -24,7 +24,7 @@ const {
 	clearAccessTokenCookie,
 } = require('../utils/session')
 
-exports.register = async (req, res, next) => {
+exports.register = async (req, res) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
@@ -64,14 +64,14 @@ exports.register = async (req, res, next) => {
 			code: 201,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.login = async (req, res, next) => {
+exports.login = async (req, res) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
@@ -105,14 +105,14 @@ exports.login = async (req, res, next) => {
 			code: 200,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.logout = async (req, res, next) => {
+exports.logout = async (req, res) => {
 	try {
 		const { access_token } = req.cookies
 
@@ -131,14 +131,14 @@ exports.logout = async (req, res, next) => {
 			})
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.checkAuthSession = (req, res, next) => {
+exports.checkAuthSession = (req, res) => {
 	res.json({
 		message: 'Current auth session',
 		session: req.session,
@@ -147,7 +147,7 @@ exports.checkAuthSession = (req, res, next) => {
 	})
 }
 
-exports.verify = async (req, res, next) => {
+exports.verify = async (req, res) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
 			const { token } = req.params
@@ -175,14 +175,14 @@ exports.verify = async (req, res, next) => {
 			code: 200,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.resendVerification = async (req, res, next) => {
+exports.resendVerification = async (req, res) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
@@ -214,14 +214,14 @@ exports.resendVerification = async (req, res, next) => {
 			code: 200,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.forgotPassword = async (req, res, next) => {
+exports.forgotPassword = async (req, res) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
@@ -252,14 +252,14 @@ exports.forgotPassword = async (req, res, next) => {
 			code: 200,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.resetPassword = async (req, res, next) => {
+exports.resetPassword = async (req, res) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
@@ -292,9 +292,9 @@ exports.resetPassword = async (req, res, next) => {
 			code: 200,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
