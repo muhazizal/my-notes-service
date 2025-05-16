@@ -45,13 +45,6 @@ exports.validateUserNotVerified = (isVerified) => {
 		throw error
 	}
 }
-exports.validateTokenNotExist = (token) => {
-	if (!token) {
-		const error = new Error('Invalid access token')
-		error.statusCode = 401
-		throw error
-	}
-}
 exports.validateUsernameExist = (username, payload) => {
 	if (username === payload) {
 		const error = new Error('Username is already exist')
@@ -63,13 +56,6 @@ exports.validateEmailExist = (userEmail, payload) => {
 	if (userEmail === payload) {
 		const error = new Error('Email is already exist')
 		error.statusCode = 422
-		throw error
-	}
-}
-exports.validateSessionNotExist = (session) => {
-	if (!session) {
-		const error = new Error('Session Expired')
-		error.statusCode = 403
 		throw error
 	}
 }

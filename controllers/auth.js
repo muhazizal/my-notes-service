@@ -93,7 +93,7 @@ exports.login = async (req, res) => {
 			const accessToken = createAccessToken(user.id)
 			const refreshToken = createRefreshToken(user.id)
 
-			await storeAuthSession(accessToken, refreshToken)
+			await storeAuthSession(res, accessToken, refreshToken)
 		})
 
 		res.status(200).json({
@@ -110,9 +110,9 @@ exports.login = async (req, res) => {
 
 exports.logout = async (req, res) => {
 	try {
-		const { access_token } = req.cookies
+		const { session_id } = req.cookies
 
-		await destroyAuthSession(access_token)
+		await destroyAuthSession(session_id)
 
 		res.status(200).json({
 			message: 'Success logout user',

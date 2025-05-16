@@ -2,30 +2,20 @@ const jwt = require('jsonwebtoken')
 
 const { Session: SessionModel } = require('../models/index')
 
-const { validateTokenNotExist, validateSessionNotExist } = require('../validator/auth')
+const { validateSessionNotExist } = require('../validator/auth')
 
 const {
 	createAccessToken,
 	createRefreshToken,
 	setAccessTokenCookie,
 	destroyAuthSession,
-	clearAccessTokenCookie,
 } = require('../utils/session')
 
-const handleVerifyJwtSession = async (res, accessToken) => {
+const handleVerifyJwtSession = async (res, session) => {
 	// Check access token
-	return jwt.verify(accessToken, process.env.JWT_SECRET, async (error, decoded) => {
+	return jwt.verify(session.accessToken, process.env.JWT_SECRET, async (error, decoded) => {
 		// Handle access token expired
 		if (error && error.name === 'TokenExpiredError') {
-			// Check session
-			const session = await SessionModel.findOne({
-				where: {
-					accessToken,
-				},
-			})
-
-			validateSessionNotExist(session)
-
 			// Check refresh token
 			return jwt.verify(
 				session.refreshToken,
@@ -33,9 +23,7 @@ const handleVerifyJwtSession = async (res, accessToken) => {
 				async (error, decoded) => {
 					// Handle refresh token expires
 					if (error && error.name === 'TokenExpiredError') {
-						await destroyAuthSession(session.accessToken)
-
-						clearAccessTokenCookie(res)
+						await destroyAuthSession(session.sid)
 
 						throw error
 					}
@@ -66,11 +54,13 @@ const handleVerifyJwtSession = async (res, accessToken) => {
 const authMiddleware = async (req, res, next) => {
 	const transaction = await SessionModel.sequelize.transaction()
 	try {
-		const { access_token } = req.cookies
+		const { session_id } = req.cookies
+		if (!session_id) return res.status(401).json({ message: 'Unauthorized' })
 
-		validateTokenNotExist(access_token)
+		const session = await SessionModel.findByPk(session_id)
+		if (!session) return res.status(401).json({ message: 'Session not found' })
 
-		req.userId = await handleVerifyJwtSession(res, access_token)
+		req.userId = await handleVerifyJwtSession(res, session)
 
 		await transaction.commit()
 

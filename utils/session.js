@@ -11,21 +11,43 @@ exports.createRefreshToken = (userId) => {
 	return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, { expiresIn: '1d' })
 }
 
-exports.storeAuthSession = async (accessToken, refreshToken) => {
+const setSessionCookie = (res, sessionId) => {
+	res.cookie('session_id', sessionId, {
+		httpOnly: true,
+		secure: process.env.NODE_ENV === 'production',
+		sameSite: 'lax',
+		maxAge: 1 * 24 * 60 * 60 * 1000, // 1d
+	})
+}
+
+const destroySessionCookie = (res) => {
+	res.clearCookie('session_id', {
+		httpOnly: true,
+		secure: process.env.NODE_ENV === 'production',
+		sameSite: 'lax',
+		maxAge: 0,
+	})
+}
+
+exports.storeAuthSession = async (res, accessToken, refreshToken) => {
 	try {
 		await SessionModel.sequelize.transaction(async (t) => {
+			const sessionId = uuidv4()
+
 			const expires = new Date()
 			expires.setDate(expires.getDate() + 1) // 1d
 
 			await SessionModel.create(
 				{
-					sid: uuidv4(),
+					sid: sessionId,
 					expires,
 					accessToken,
 					refreshToken,
 				},
 				{ transaction: t }
 			)
+
+			setSessionCookie(res, sessionId)
 		})
 	} catch (error) {
 		if (!error.statusCode) {
@@ -35,15 +57,17 @@ exports.storeAuthSession = async (accessToken, refreshToken) => {
 	}
 }
 
-exports.destroyAuthSession = async (accessToken) => {
+exports.destroyAuthSession = async (sid) => {
 	try {
 		await SessionModel.sequelize.transaction(async (t) => {
 			await SessionModel.destroy({
 				where: {
-					accessToken,
+					sid,
 				},
 				transaction: t,
 			})
+
+			destroySessionCookie(sid)
 		})
 	} catch (error) {
 		if (!error.statusCode) {
