@@ -4,7 +4,7 @@ const { validateRequest, validateNoteExist } = require('../validator/note')
 
 const { pickAttributes } = require('../utils/filter')
 
-exports.getNotes = async (req, res, next) => {
+exports.getNotes = async (req, res) => {
 	try {
 		const result = await NoteModel.sequelize.transaction(async (t) => {
 			const { userId } = req
@@ -24,14 +24,14 @@ exports.getNotes = async (req, res, next) => {
 			code: 200,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.createNote = async (req, res, next) => {
+exports.createNote = async (req, res) => {
 	try {
 		const result = await NoteModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
@@ -53,14 +53,14 @@ exports.createNote = async (req, res, next) => {
 			code: 201,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.getNoteById = async (req, res, next) => {
+exports.getNoteById = async (req, res) => {
 	try {
 		const result = await NoteModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
@@ -88,14 +88,14 @@ exports.getNoteById = async (req, res, next) => {
 			code: 200,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.updateNote = async (req, res, next) => {
+exports.updateNote = async (req, res) => {
 	try {
 		const result = await NoteModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
@@ -127,14 +127,14 @@ exports.updateNote = async (req, res, next) => {
 			code: 201,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
 
-exports.deleteNote = async (req, res, next) => {
+exports.deleteNote = async (req, res) => {
 	try {
 		await NoteModel.sequelize.transaction(async (t) => {
 			const { id } = req.params
@@ -160,9 +160,9 @@ exports.deleteNote = async (req, res, next) => {
 			code: 200,
 		})
 	} catch (error) {
-		if (!error.statusCode) {
-			error.statusCode = 500
-		}
-		next(error)
+		res.status(error.statusCode || 500).json({
+			success: false,
+			message: error.message || 'Internal Server Error',
+		})
 	}
 }
