@@ -16,7 +16,6 @@ const setSessionCookie = (res, sessionId) => {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
 		sameSite: 'lax',
-		maxAge: 1 * 24 * 60 * 60 * 1000, // 1d
 	})
 }
 
