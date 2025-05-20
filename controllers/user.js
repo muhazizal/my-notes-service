@@ -78,7 +78,13 @@ exports.updateProfile = async (req, res) => {
 			user.email = email
 			user.fullname = fullname
 
-			return await user.save({ transaction: t })
+			await user.save({ transaction: t })
+
+			return {
+				username: user.username,
+				email: user.email,
+				fullname: user.fullname,
+			}
 		})
 
 		res.status(201).json({
