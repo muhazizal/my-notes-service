@@ -114,6 +114,10 @@ exports.deleteAccount = async (req, res) => {
 			await user.destroy({
 				transaction: t,
 			})
+
+			const { session_id } = req.cookies
+
+			await destroyAuthSession(res, session_id)
 		})
 
 		res.status(200).json({
