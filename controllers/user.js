@@ -16,7 +16,7 @@ exports.getProfile = async (req, res) => {
 
 			const user = await UserModel.findByPk(userId, {
 				transaction: t,
-				attributes: ['id', 'username', 'email', 'fullname', 'isVerified'],
+				attributes: ['username', 'email', 'fullname', 'isVerified'],
 			})
 
 			validateUserNotExist(user)
