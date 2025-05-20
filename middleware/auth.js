@@ -5,8 +5,8 @@ const { Session: SessionModel } = require('../models/index')
 const {
 	createAccessToken,
 	createRefreshToken,
-	setAccessTokenCookie,
-	destroyAuthSession,
+	setSessionCookie,
+	destroySessionCookie,
 } = require('../utils/session')
 
 const handleVerifyJwtSession = async (res, session) => {
@@ -21,7 +21,7 @@ const handleVerifyJwtSession = async (res, session) => {
 				async (error, decoded) => {
 					// Handle refresh token expires
 					if (error && error.name === 'TokenExpiredError') {
-						await destroyAuthSession(session.sid)
+						await destroySessionCookie(res)
 
 						throw error
 					}
@@ -38,7 +38,7 @@ const handleVerifyJwtSession = async (res, session) => {
 					await session.save()
 
 					// update access token in cookie
-					setAccessTokenCookie(res, newAccessToken)
+					setSessionCookie(res, session.sid)
 
 					return decoded.userId
 				}
