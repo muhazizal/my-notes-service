@@ -112,7 +112,7 @@ exports.logout = async (req, res) => {
 	try {
 		const { session_id } = req.cookies
 
-		await destroyAuthSession(session_id)
+		await destroyAuthSession(res, session_id)
 
 		res.status(200).json({
 			message: 'Success logout user',

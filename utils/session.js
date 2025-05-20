@@ -56,7 +56,7 @@ exports.storeAuthSession = async (res, accessToken, refreshToken) => {
 	}
 }
 
-exports.destroyAuthSession = async (sid) => {
+exports.destroyAuthSession = async (res, sid) => {
 	try {
 		await SessionModel.sequelize.transaction(async (t) => {
 			await SessionModel.destroy({
@@ -66,7 +66,7 @@ exports.destroyAuthSession = async (sid) => {
 				transaction: t,
 			})
 
-			destroySessionCookie(sid)
+			destroySessionCookie(res)
 		})
 	} catch (error) {
 		if (!error.statusCode) {
