@@ -26,18 +26,18 @@ const handleVerifyJwtSession = async (res, session) => {
 						throw error
 					}
 
-					// generate new access token & refresh token
+					// Generate new access token & refresh token
 					const newAccessToken = createAccessToken(decoded.userId)
 					const newRefreshToken = createRefreshToken(decoded.userId)
 
-					// update access token & refresh token in session
+					// Update access token & refresh token in session
 					session.accessToken = newAccessToken
 					session.refreshToken = newRefreshToken
 
-					// save updated session token
+					// Save updated session token
 					await session.save()
 
-					// update access token in cookie
+					// Update access token in cookie
 					setSessionCookie(res, session.sid)
 
 					return decoded.userId
@@ -53,10 +53,18 @@ const authMiddleware = async (req, res, next) => {
 	const transaction = await SessionModel.sequelize.transaction()
 	try {
 		const { session_id } = req.cookies
-		if (!session_id) return res.status(401).json({ message: 'Unauthorized' })
+		// Check session id from cookies
+		if (!session_id) {
+			await destroySessionCookie(res)
+			return res.status(401).json({ message: 'Unauthorized' })
+		}
 
 		const session = await SessionModel.findByPk(session_id)
-		if (!session) return res.status(401).json({ message: 'Session not found' })
+		// Check session from database
+		if (!session) {
+			await destroySessionCookie(res)
+			return res.status(401).json({ message: 'Session not found' })
+		}
 
 		req.userId = await handleVerifyJwtSession(res, session)
 

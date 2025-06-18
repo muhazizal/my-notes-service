@@ -16,6 +16,7 @@ setSessionCookie = (res, sessionId) => {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
 		sameSite: 'lax',
+		path: '/',
 	})
 }
 
@@ -24,7 +25,7 @@ destroySessionCookie = (res) => {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
 		sameSite: 'lax',
-		maxAge: 0,
+		path: '/',
 	})
 }
 
