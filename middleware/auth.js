@@ -29,10 +29,13 @@ const handleVerifyJwtSession = async (res, session) => {
 					// Generate new access token & refresh token
 					const newAccessToken = createAccessToken(decoded.userId)
 					const newRefreshToken = createRefreshToken(decoded.userId)
+					const newExpires = new Date()
+					newExpires.setDate(newExpires.getDate() + 1) // 1d
 
 					// Update access token & refresh token in session
 					session.accessToken = newAccessToken
 					session.refreshToken = newRefreshToken
+					session.expires = newExpires
 
 					// Save updated session token
 					await session.save()
