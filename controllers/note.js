@@ -14,6 +14,7 @@ exports.getNotes = async (req, res) => {
 					userId,
 				},
 				attributes: ['id', 'title', 'description', 'raw_description', 'createdAt', 'updatedAt'],
+				order: [['updatedAt', 'DESC']],
 				transaction: t,
 			})
 		})
