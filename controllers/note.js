@@ -2,7 +2,6 @@ const { Note: NoteModel, User: UserModel } = require('../models/index')
 
 const { validateRequest, validateNoteExist } = require('../validator/note')
 
-const { pickAttributes } = require('../utils/filter')
 const { sanitizeTiptapHTML } = require('../utils/sanitize-html')
 
 exports.getNotes = async (req, res) => {
@@ -14,7 +13,7 @@ exports.getNotes = async (req, res) => {
 				where: {
 					userId,
 				},
-				attributes: ['id', 'title', 'description', 'updatedAt'],
+				attributes: ['id', 'title', 'description', 'raw_description', 'createdAt', 'updatedAt'],
 				transaction: t,
 			})
 		})
@@ -41,12 +40,13 @@ exports.createNote = async (req, res) => {
 			const { title, description } = req.body
 			const safe_description = sanitizeTiptapHTML(description)
 
-			const newNote = await NoteModel.create(
+			return await NoteModel.create(
 				{ title, raw_description: description, description: safe_description, userId },
-				{ attributes: ['id', 'title', 'description', 'createdAt'], transaction: t }
+				{
+					attributes: ['id', 'title', 'description', 'raw_description', 'createdAt', 'updatedAt'],
+					transaction: t,
+				}
 			)
-
-			return pickAttributes(newNote.dataValues, ['id', 'title', 'description', 'createdAt'])
 		})
 
 		res.status(201).json({
@@ -75,7 +75,7 @@ exports.getNoteById = async (req, res) => {
 					id,
 					userId,
 				},
-				attributes: ['id', 'title', 'description', 'createdAt', 'updatedAt'],
+				attributes: ['id', 'title', 'description', 'raw_description', 'createdAt', 'updatedAt'],
 				transaction: t,
 			})
 
@@ -111,7 +111,7 @@ exports.updateNote = async (req, res) => {
 					id,
 					userId,
 				},
-				attributes: ['id', 'title', 'description', 'updatedAt'],
+				attributes: ['id', 'title', 'description', 'raw_description', 'createdAt', 'updatedAt'],
 				transaction: t,
 			})
 
