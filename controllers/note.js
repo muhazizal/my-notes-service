@@ -3,6 +3,7 @@ const { Note: NoteModel, User: UserModel } = require('../models/index')
 const { validateRequest, validateNoteExist } = require('../validator/note')
 
 const { pickAttributes } = require('../utils/filter')
+const { sanitizeTiptapHTML } = require('../utils/sanitize-html')
 
 exports.getNotes = async (req, res) => {
 	try {
@@ -36,11 +37,12 @@ exports.createNote = async (req, res) => {
 		const result = await NoteModel.sequelize.transaction(async (t) => {
 			validateRequest(req, res)
 
-			const { title, description } = req.body
 			const { userId } = req
+			const { title, description } = req.body
+			const safe_description = sanitizeTiptapHTML(description)
 
 			const newNote = await NoteModel.create(
-				{ title, description, userId },
+				{ title, raw_description: description, description: safe_description, userId },
 				{ attributes: ['id', 'title', 'description', 'createdAt'], transaction: t }
 			)
 

@@ -27,6 +27,7 @@
 		"pg-hstore": "^2.3.4",
 		"rate-limit-redis": "^4.2.0",
 		"redis": "^4.7.0",
+		"sanitize-html": "^2.17.0",
 		"sequelize": "^6.37.3",
 		"uuid": "^10.0.0"
 	},

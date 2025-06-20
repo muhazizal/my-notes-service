@@ -17,10 +17,28 @@ module.exports = () => {
 			})
 		}
 	}
+
 	Note.init(
 		{
-			title: DataTypes.STRING,
-			description: DataTypes.STRING,
+			title: {
+				type: DataTypes.STRING,
+				allowNull: false,
+				validate: {
+					notEmpty: true,
+				},
+			},
+			description: {
+				type: DataTypes.TEXT,
+				allowNull: true,
+			},
+			raw_description: {
+				type: DataTypes.TEXT,
+				allowNull: true,
+			},
+			userId: {
+				type: DataTypes.INTEGER,
+				allowNull: false,
+			},
 		},
 		{
 			sequelize,
@@ -33,5 +51,6 @@ module.exports = () => {
 			],
 		}
 	)
+
 	return Note
 }
