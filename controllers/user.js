@@ -1,5 +1,7 @@
 const { Op } = require('sequelize')
 
+const { destroyAuthSession } = require('../utils/session')
+
 const { User: UserModel } = require('../models/index')
 
 const {
