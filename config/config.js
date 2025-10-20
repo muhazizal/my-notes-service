@@ -7,6 +7,9 @@ module.exports = {
 		database: process.env.DB_DATABASE,
 		host: process.env.DB_HOST,
 		dialect: process.env.DB_DIALECT,
+		port: process.env.DB_PORT || 5432,
+		dialectOptions:
+			process.env.DB_SSL === 'true' ? { ssl: { require: true, rejectUnauthorized: false } } : {},
 	},
 	production: {
 		username: process.env.DB_USERNAME,
@@ -14,5 +17,7 @@ module.exports = {
 		database: process.env.DB_DATABASE,
 		host: process.env.DB_HOST,
 		dialect: process.env.DB_DIALECT,
+		port: process.env.DB_PORT || 5432,
+		dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
 	},
 }
