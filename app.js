@@ -37,16 +37,27 @@ app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
 
 // Start
-sequelize
-	.sync()
-	.then(() => {
-		app.listen(process.env.APP_PORT, process.env.APP_HOST, () => {
-			consola.ready({
-				message: `Server listening on port: ${process.env.APP_PORT}`,
-				badge: true,
-			})
+const startServer = () => {
+	app.listen(process.env.APP_PORT, process.env.APP_HOST, () => {
+		consola.ready({
+			message: `Server listening on port: ${process.env.APP_PORT}`,
+			badge: true,
 		})
 	})
-	.catch((error) => {
-		throw new Error(error)
-	})
+}
+
+if (process.env.NODE_ENV === 'development') {
+	sequelize
+		.sync()
+		.then(startServer)
+		.catch((error) => {
+			throw new Error(error)
+		})
+} else {
+	sequelize
+		.authenticate()
+		.then(startServer)
+		.catch((error) => {
+			throw new Error(error)
+		})
+}
