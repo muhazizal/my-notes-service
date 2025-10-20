@@ -60,7 +60,7 @@ exports.validateEmailExist = (userEmail, payload) => {
 	}
 }
 exports.validateVerifyTokenExpired = (expires) => {
-	if (expires <= Date.now().toString()) {
+	if (Number(expires) <= Date.now()) {
 		const error = new Error('Token Expired')
 		error.statusCode = 422
 		throw error

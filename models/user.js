@@ -45,7 +45,7 @@ module.exports = () => {
 				allowNull: true,
 			},
 			verificationTokenExpires: {
-				type: DataTypes.STRING,
+				type: DataTypes.BIGINT,
 				allowNull: true,
 			},
 			resetPasswordToken: {
@@ -53,7 +53,7 @@ module.exports = () => {
 				allowNull: true,
 			},
 			resetPasswordTokenExpires: {
-				type: DataTypes.STRING,
+				type: DataTypes.BIGINT,
 				allowNull: true,
 			},
 		},
