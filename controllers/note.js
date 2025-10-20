@@ -118,8 +118,10 @@ exports.updateNote = async (req, res) => {
 
 			validateNoteExist(note)
 
+			const safe_description = sanitizeTiptapHTML(description)
 			note.title = title
-			note.description = description
+			note.raw_description = description
+			note.description = safe_description
 
 			return await note.save({ transaction: t })
 		})
