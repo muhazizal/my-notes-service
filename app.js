@@ -43,6 +43,11 @@ const startServer = () => {
 			message: `Server listening on port: ${process.env.APP_PORT}`,
 			badge: true,
 		})
+
+		consola.ready({
+			message: `NODE_ENV: ${process.env.NODE_ENV}`,
+			badge: true,
+		})
 	})
 }
 

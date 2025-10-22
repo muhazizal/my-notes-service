@@ -2,22 +2,23 @@ require('dotenv').config()
 
 module.exports = {
 	development: {
+		url: process.env.DATABASE_URL,
 		username: process.env.DB_USERNAME,
 		password: process.env.DB_PASSWORD,
 		database: process.env.DB_DATABASE,
 		host: process.env.DB_HOST,
 		dialect: process.env.DB_DIALECT,
 		port: process.env.DB_PORT || 5432,
-		dialectOptions:
-			process.env.DB_SSL === 'true' ? { ssl: { require: true, rejectUnauthorized: false } } : {},
+		poolMode: process.env.DB_POOL_MODE || 'transaction',
 	},
 	production: {
+		url: process.env.DATABASE_URL,
 		username: process.env.DB_USERNAME,
 		password: process.env.DB_PASSWORD,
 		database: process.env.DB_DATABASE,
 		host: process.env.DB_HOST,
 		dialect: process.env.DB_DIALECT,
 		port: process.env.DB_PORT || 5432,
-		dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
+		poolMode: process.env.DB_POOL_MODE || 'transaction',
 	},
 }
