@@ -38,9 +38,9 @@ app.use('/api/user', userRoutes)
 
 // Start
 const startServer = () => {
-	app.listen(process.env.PORT, process.env.HOST, () => {
+	app.listen(process.env.PORT || 8000, process.env.HOST || '0.0.0.0', () => {
 		consola.ready({
-			message: `Server listening on port: ${process.env.PORT}`,
+			message: `Server listening on port: ${process.env.PORT || 8000}`,
 			badge: true,
 		})
 
