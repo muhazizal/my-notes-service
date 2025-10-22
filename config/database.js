@@ -33,5 +33,4 @@ const sequelize = isProd
 			logging: false,
 	  })
 
-console.log(sequelize)
 module.exports = sequelize
