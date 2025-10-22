@@ -8,8 +8,8 @@ module.exports = {
 		database: process.env.DB_DATABASE,
 		host: process.env.DB_HOST,
 		dialect: process.env.DB_DIALECT,
-		port: process.env.DB_PORT || 6543,
-		poolMode: process.env.DB_POOL_MODE || 'transaction',
+		port: process.env.DB_PORT,
+		poolMode: process.env.DB_POOL_MODE,
 	},
 	production: {
 		url: process.env.DATABASE_URL,
@@ -18,7 +18,7 @@ module.exports = {
 		database: process.env.DB_DATABASE,
 		host: process.env.DB_HOST,
 		dialect: process.env.DB_DIALECT,
-		port: process.env.DB_PORT || 6543,
-		poolMode: process.env.DB_POOL_MODE || 'transaction',
+		port: process.env.DB_PORT,
+		poolMode: process.env.DB_POOL_MODE,
 	},
 }
