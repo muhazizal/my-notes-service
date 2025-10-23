@@ -65,7 +65,7 @@ exports.sendEmailResetPassword = async (req, resetPasswordToken, email) => {
 	const mailOptions = {
 		from: process.env.EMAIL_USER,
 		to: email,
-		subject: 'My Shop - Reset Password',
+		subject: 'My Notes - Reset Password',
 		html: emailHtml,
 	}
 
