@@ -8,12 +8,24 @@ const {
 	validateUsernameExist,
 	validateEmailExist,
 } = require('../validator/auth')
+const cache = require('../utils/cache')
 
 exports.getProfile = async (req, res) => {
 	try {
-		const result = await UserModel.sequelize.transaction(async (t) => {
-			const { userId } = req
+		const { userId } = req
 
+		const cacheKey = `profile:user:${userId}`
+		const cached = await cache.getJSON(cacheKey)
+
+		if (cached) {
+			return res.status(200).json({
+				message: 'Success get profile (cache)',
+				data: cached,
+				code: 200,
+			})
+		}
+
+		const result = await UserModel.sequelize.transaction(async (t) => {
 			const user = await UserModel.findByPk(userId, {
 				transaction: t,
 				attributes: ['username', 'email', 'fullname', 'isVerified'],
@@ -23,6 +35,8 @@ exports.getProfile = async (req, res) => {
 
 			return user
 		})
+
+		await cache.setJSON(cacheKey, result, 120)
 
 		res.status(200).json({
 			message: 'Success get profile',
@@ -87,6 +101,8 @@ exports.updateProfile = async (req, res) => {
 			}
 		})
 
+		await cache.del(`profile:user:${req.userId}`)
+
 		res.status(201).json({
 			message: message,
 			data: result,
@@ -119,6 +135,8 @@ exports.deleteAccount = async (req, res) => {
 
 			await destroyAuthSession(res, session_id)
 		})
+
+		await cache.delMany([`profile:user:${req.userId}`, `notes:user:${req.userId}`])
 
 		res.status(200).json({
 			message: 'Success delete account',
