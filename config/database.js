@@ -1,19 +1,12 @@
-const Sequelize = require('sequelize')
-const fs = require('fs')
-const path = require('path')
-
+const { Sequelize } = require('sequelize')
 const config = require('./config')
 
-const caPath = path.resolve(__dirname, './prod-ca-2021.crt')
-const caCert = fs.readFileSync(caPath).toString()
-
 const dialectOptions =
-	process.env.DB_SSL === 'true'
+	process.env.NODE_ENV === 'production'
 		? {
 				ssl: {
 					require: true,
 					rejectUnauthorized: false,
-					ca: caCert,
 				},
 		  }
 		: {}
