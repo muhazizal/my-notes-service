@@ -3,9 +3,9 @@
 	"version": "1.0.0",
 	"main": "index.js",
 	"scripts": {
-		"dev": "NODE_ENV=development nodemon app.js",
-		"start": "NODE_ENV=production node app.js",
-		"migrate": "NODE_ENV=production npx sequelize-cli db:migrate"
+		"dev": "cross-env NODE_ENV=development nodemon app.js",
+		"start": "cross-env NODE_ENV=production node app.js",
+		"migrate": "cross-env NODE_ENV=production npx sequelize-cli db:migrate"
 	},
 	"keywords": [],
 	"author": "",
@@ -35,5 +35,8 @@
 		"sequelize": "^6.37.3",
 		"sequelize-cli": "^6.6.2",
 		"uuid": "^10.0.0"
+	},
+	"devDependencies": {
+		"cross-env": "^10.1.0"
 	}
 }
