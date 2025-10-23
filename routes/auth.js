@@ -20,6 +20,7 @@ const {
 	resetPasswordSchema,
 } = require('../schema/auth')
 
+// * TEMPORARY DISABLE
 const { tokenBlastLimiter, emailBlastLimiter } = require('../utils/rate-limiter')
 
 const { authMiddleware } = require('../middleware/auth')
@@ -36,11 +37,7 @@ router.post('/login', loginSchema, login)
 router.get('/verify/:token', verifySchema, verify)
 
 // Resend verification
-router.post(
-	'/resend-verification',
-	resendVerificationSchema,
-	resendVerification
-)
+router.post('/resend-verification', resendVerificationSchema, resendVerification)
 
 // Forgot password
 router.post('/forgot-password', forgotPasswordSchema, forgotPassword)
