@@ -1,23 +1,8 @@
-const nodemailer = require('nodemailer')
+const { Resend } = require('resend')
 
-const createTransporter = () => {
-	const transporter = nodemailer.createTransport({
-		service: 'Gmail',
-		auth: {
-			user: process.env.EMAIL_USER,
-			pass: process.env.EMAIL_PASSWORD,
-		},
-	})
-	return { transporter }
-}
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 exports.sendEmailVerification = async (req, verificationToken, email) => {
-	// BE rest api
-	// const verificationUrl = `${req.protocol}://${req.get(
-	// 	'host'
-	// )}/api/auth/verify/${verificationToken}`
-
-	// FE verification url
 	const verificationUrl = `${process.env.VERIFY_URL}/${verificationToken}`
 
 	const emailHtml = `
@@ -29,25 +14,21 @@ exports.sendEmailVerification = async (req, verificationToken, email) => {
 			<p>If you did not create an account, please ignore this email.</p>
 	`
 
-	const { transporter } = createTransporter()
-
-	const mailOptions = {
-		from: process.env.EMAIL_USER,
+	const { error } = await resend.emails.send({
+		from: `My Notes <${process.env.RESEND_FROM_EMAIL}>`,
 		to: email,
-		subject: 'My Notes - Email Verification',
+		subject: 'My Notes - Verify Email',
 		html: emailHtml,
-	}
+	})
 
-	await transporter.sendMail(mailOptions)
+	if (error) {
+		const _error = new Error(error.message)
+		_error.statusCode = error.statusCode
+		throw _error
+	}
 }
 
 exports.sendEmailResetPassword = async (req, resetPasswordToken, email) => {
-	// BE rest api
-	// const resetPasswordUrl = `${req.protocol}://${req.get(
-	// 	'host'
-	// )}/api/auth/reset-password/${resetPasswordToken}`
-
-	// FE reset password url
 	const resetPasswordUrl = `${process.env.RESET_URL}/${resetPasswordToken}`
 
 	const emailHtml = `
@@ -60,14 +41,16 @@ exports.sendEmailResetPassword = async (req, resetPasswordToken, email) => {
 			<p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
 	`
 
-	const { transporter } = createTransporter()
-
-	const mailOptions = {
-		from: process.env.EMAIL_USER,
+	const { error } = await resend.emails.send({
+		from: `My Notes <${process.env.RESEND_FROM_EMAIL}>`,
 		to: email,
 		subject: 'My Notes - Reset Password',
 		html: emailHtml,
-	}
+	})
 
-	await transporter.sendMail(mailOptions)
+	if (error) {
+		const _error = new Error(error.message)
+		_error.statusCode = error.statusCode
+		throw _error
+	}
 }
