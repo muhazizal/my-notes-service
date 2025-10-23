@@ -1,33 +1,36 @@
 const consola = require('consola')
 const { createClient } = require('redis')
 
-const redisClient = createClient({
+const client = createClient({
+	username: process.env.REDIS_USERNAME,
+	password: process.env.REDIS_PASSWORD,
 	socket: {
 		host: process.env.REDIS_SOCKET_HOST,
 		port: process.env.REDIS_SOCKET_PORT,
-		tls: process.env.REDIS_TLS === 'true',
 	},
-	password: process.env.REDIS_PASSWORD,
 })
 
-const startRedisClient = async () => {
-	redisClient.on('error', (err) => {
-		consola.error({
-			message: err,
-			badge: true,
-		})
-	})
+client.on('error', (err) => {
+	consola.error({ message: `❌ Redis error: ${err.message}`, badge: true })
+})
 
-	redisClient.on('connect', () => {
-		consola.ready({
-			message: `Connected to Redis Client`,
-			badge: true,
-		})
-	})
+client.on('connect', () => {
+	consola.ready({ message: `✅ Connected to Redis`, badge: true })
+})
 
-	await redisClient.connect()
-}
+client.on('ready', () => {
+	consola.ready({ message: `✅ Redis client ready`, badge: true })
+})
 
-startRedisClient()
+client.on('end', () => {
+	consola.warn({ message: `⚠️ Redis client disconnected`, badge: true })
+})
+;(async () => {
+	try {
+		await client.connect()
+	} catch (err) {
+		consola.error({ message: `❌ Redis connect failed: ${err.message}`, badge: true })
+	}
+})()
 
-module.exports = redisClient
+module.exports = client
