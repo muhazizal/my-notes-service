@@ -23,6 +23,13 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 	port: config.port,
 	dialect: config.dialect,
 	dialectOptions,
+	pool: {
+		max: 10,
+		min: 0,
+		acquire: 30000,
+		idle: 10000,
+	},
+	logging: false, // optional, to reduce overhead
 })
 
 module.exports = sequelize
