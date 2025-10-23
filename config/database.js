@@ -15,6 +15,7 @@ const dialectOptions =
 					rejectUnauthorized: true,
 					ca: caCert,
 				},
+				keepAlive: true,
 		  }
 		: {}
 
