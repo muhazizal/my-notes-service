@@ -37,10 +37,14 @@ router.post('/login', loginSchema, login)
 router.get('/verify/:token', verifySchema, verify)
 
 // Resend verification
-router.post('/resend-verification', resendVerificationSchema, resendVerification)
+router.post(
+	'/resend-verification',
+	[tokenBlastLimiter, resendVerificationSchema],
+	resendVerification
+)
 
 // Forgot password
-router.post('/forgot-password', forgotPasswordSchema, forgotPassword)
+router.post('/forgot-password', [emailBlastLimiter, forgotPasswordSchema], forgotPassword)
 
 // Reset password
 router.post('/reset-password/:token', resetPasswordSchema, resetPassword)
