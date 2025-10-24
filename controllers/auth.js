@@ -54,7 +54,17 @@ exports.register = async (req, res) => {
 				{ transaction: t }
 			)
 
-			await sendEmailVerification(req, token, email)
+			// Send email AFTER transaction commit
+			try {
+				await sendEmailVerification(req, token, email)
+			} catch (emailErr) {
+				console.warn('sendEmailVerification failed:', emailErr.message)
+			}
+
+			res.status(201).json({
+				message: 'Success register user, please verify your email',
+				code: 201,
+			})
 		})
 
 		res.status(201).json({
@@ -190,9 +200,14 @@ exports.resendVerification = async (req, res) => {
 			user.verificationTokenExpires = tokenExpires
 
 			await user.save({ transaction: t })
-
-			await sendEmailVerification(req, newToken, user.email)
 		})
+
+		// Send email AFTER transaction commit
+		try {
+			await sendEmailVerification(req, newToken, user.email)
+		} catch (emailErr) {
+			console.warn('sendEmailVerification failed:', emailErr.message)
+		}
 
 		res.status(200).json({
 			message: 'Success resend verification',
@@ -228,9 +243,14 @@ exports.forgotPassword = async (req, res) => {
 			user.resetPasswordTokenExpires = tokenExpires
 
 			await user.save({ transaction: t })
-
-			await sendEmailResetPassword(req, token, email)
 		})
+
+		// Send email AFTER transaction commit
+		try {
+			await sendEmailResetPassword(req, token, email)
+		} catch (emailErr) {
+			console.warn('sendEmailResetPassword failed:', emailErr.message)
+		}
 
 		res.status(200).json({
 			message: 'Success forgot password, please check your email',
