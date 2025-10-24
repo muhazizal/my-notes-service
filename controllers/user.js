@@ -20,7 +20,7 @@ exports.getProfile = async (req, res) => {
 
 		if (cached) {
 			return res.status(200).json({
-				message: 'Success get profile (cache)',
+				message: 'Success get profile',
 				data: cached,
 				code: 200,
 			})

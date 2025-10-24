@@ -15,7 +15,7 @@ exports.getNotes = async (req, res) => {
 
 		if (cached) {
 			return res.status(200).json({
-				message: 'Success get notes (cache)',
+				message: 'Success get notes',
 				data: cached,
 				code: 200,
 			})
@@ -110,7 +110,7 @@ exports.getNoteById = async (req, res) => {
 
 		if (cached) {
 			return res.status(200).json({
-				message: 'Success get note (cache)',
+				message: 'Success get note',
 				data: cached,
 				code: 200,
 			})
