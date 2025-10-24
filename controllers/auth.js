@@ -22,6 +22,8 @@ const {
 	destroyAuthSession,
 } = require('../utils/session')
 
+const consola = require('consola')
+
 exports.register = async (req, res) => {
 	try {
 		await UserModel.sequelize.transaction(async (t) => {
@@ -58,7 +60,13 @@ exports.register = async (req, res) => {
 			try {
 				await sendEmailVerification(req, token, email)
 			} catch (emailErr) {
-				console.warn('sendEmailVerification failed:', emailErr.message)
+				consola.warn({
+					event: 'email_send_verification_failed',
+					route: 'register',
+					email: userEmail,
+					tokenLength: verificationToken?.length,
+					error: emailErr.message,
+				})
 			}
 
 			res.status(201).json({
@@ -72,6 +80,14 @@ exports.register = async (req, res) => {
 			code: 201,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'auth_register_error',
+			method: req.method,
+			path: req.originalUrl,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -112,6 +128,14 @@ exports.login = async (req, res) => {
 			code: 200,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'auth_login_error',
+			method: req.method,
+			path: req.originalUrl,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -129,6 +153,14 @@ exports.logout = async (req, res) => {
 			code: 200,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'auth_logout_error',
+			method: req.method,
+			path: req.originalUrl,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -173,6 +205,14 @@ exports.verify = async (req, res) => {
 			code: 200,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'auth_verify_error',
+			method: req.method,
+			path: req.originalUrl,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -210,7 +250,13 @@ exports.resendVerification = async (req, res) => {
 		try {
 			await sendEmailVerification(req, newToken, user.email)
 		} catch (emailErr) {
-			console.warn('sendEmailVerification failed:', emailErr.message)
+			consola.warn({
+				event: 'email_send_verification_failed',
+				route: 'resendVerification',
+				email: targetEmail,
+				tokenLength: newTokenForEmail?.length,
+				error: emailErr.message,
+			})
 		}
 
 		res.status(200).json({
@@ -218,6 +264,14 @@ exports.resendVerification = async (req, res) => {
 			code: 200,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'auth_resend_verification_error',
+			method: req.method,
+			path: req.originalUrl,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -254,7 +308,12 @@ exports.forgotPassword = async (req, res) => {
 		try {
 			await sendEmailResetPassword(req, token, email)
 		} catch (emailErr) {
-			console.warn('sendEmailResetPassword failed:', emailErr.message)
+			consola.warn({
+				event: 'email_send_reset_failed',
+				email: targetEmail,
+				tokenLength: resetTokenForEmail?.length,
+				error: emailErr.message,
+			})
 		}
 
 		res.status(200).json({
@@ -262,6 +321,14 @@ exports.forgotPassword = async (req, res) => {
 			code: 200,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'auth_forgot_password_error',
+			method: req.method,
+			path: req.originalUrl,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -303,6 +370,15 @@ exports.resetPassword = async (req, res) => {
 			code: 200,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'auth_reset_password_error',
+			method: req.method,
+			path: req.originalUrl,
+			params: { token: String(req.params?.token || '').length },
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',

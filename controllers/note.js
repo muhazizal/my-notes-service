@@ -4,6 +4,7 @@ const { validateRequest, validateNoteExist } = require('../validator/note')
 
 const { sanitizeTiptapHTML } = require('../utils/sanitize-html')
 const cache = require('../utils/cache')
+const consola = require('consola')
 
 exports.getNotes = async (req, res) => {
 	try {
@@ -39,6 +40,14 @@ exports.getNotes = async (req, res) => {
 			code: 200,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'note_get_notes_error',
+			path: req.originalUrl,
+			method: req.method,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -75,6 +84,14 @@ exports.createNote = async (req, res) => {
 			code: 201,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'note_create_error',
+			path: req.originalUrl,
+			method: req.method,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -124,6 +141,14 @@ exports.getNoteById = async (req, res) => {
 			code: 200,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'note_get_by_id_error',
+			path: req.originalUrl,
+			method: req.method,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -168,6 +193,14 @@ exports.updateNote = async (req, res) => {
 			code: 201,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'note_update_error',
+			path: req.originalUrl,
+			method: req.method,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -204,6 +237,14 @@ exports.deleteNote = async (req, res) => {
 			code: 200,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'note_delete_error',
+			path: req.originalUrl,
+			method: req.method,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',

@@ -9,6 +9,7 @@ const {
 	validateEmailExist,
 } = require('../validator/auth')
 const cache = require('../utils/cache')
+const consola = require('consola')
 
 exports.getProfile = async (req, res) => {
 	try {
@@ -44,6 +45,14 @@ exports.getProfile = async (req, res) => {
 			code: 200,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'user_get_profile_error',
+			path: req.originalUrl,
+			method: req.method,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -110,6 +119,14 @@ exports.updateProfile = async (req, res) => {
 			code: 201,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'user_update_profile_error',
+			path: req.originalUrl,
+			method: req.method,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
@@ -143,6 +160,14 @@ exports.deleteAccount = async (req, res) => {
 			code: 200,
 		})
 	} catch (error) {
+		consola.error({
+			event: 'user_delete_account_error',
+			path: req.originalUrl,
+			method: req.method,
+			statusCode: error.statusCode || 500,
+			error: error.message,
+			validation: error.data,
+		})
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
