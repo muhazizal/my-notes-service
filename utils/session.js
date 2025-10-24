@@ -9,34 +9,27 @@ const createRefreshToken = (userId) => {
 	return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, { expiresIn: '1d' })
 }
 
+// Build cookie options suitable for cross-site cookies.
+const buildCookieOptions = () => {
+	const opts = {
+		httpOnly: true,
+		secure: process.env.NODE_ENV === 'production',
+		sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+		path: '/',
+	}
+	return opts
+}
+
 const setAuthCookies = (res, accessToken, refreshToken) => {
-	res.cookie('access_token', accessToken, {
-		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production',
-		sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-		path: '/',
-	})
-	res.cookie('refresh_token', refreshToken, {
-		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production',
-		sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-		path: '/',
-	})
+	const cookieOpts = buildCookieOptions()
+	res.cookie('access_token', accessToken, cookieOpts)
+	res.cookie('refresh_token', refreshToken, cookieOpts)
 }
 
 const destroyAuthCookies = (res) => {
-	res.clearCookie('access_token', {
-		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production',
-		sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-		path: '/',
-	})
-	res.clearCookie('refresh_token', {
-		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production',
-		sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-		path: '/',
-	})
+	const cookieOpts = buildCookieOptions()
+	res.clearCookie('access_token', cookieOpts)
+	res.clearCookie('refresh_token', cookieOpts)
 }
 
 const storeAuthSession = async (res, accessToken, refreshToken) => {

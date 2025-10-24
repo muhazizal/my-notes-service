@@ -14,10 +14,10 @@ const userRoutes = require('./routes/user')
 
 const app = express()
 
-// Cors
+// CORS
 app.use(
 	cors({
-		origin: true,
+		origin: process.env.CORS_ORIGIN || 'https://mn-muhazizal.vercel.app',
 		credentials: true,
 		methods: ['GET', 'PUT', 'POST', 'DELETE'],
 		allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'],

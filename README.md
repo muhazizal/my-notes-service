@@ -168,9 +168,13 @@ npm run serve:prod
 - Notes: `/api/notes/*` (CRUD, requires auth)
 - User: `/api/user/*` (profile, update, delete, requires auth)
 
-## Security
-
-- Cookies: `access_token` and `refresh_token` httpOnly cookies (secure in production).
+## Security & Auth
+- Cookies: `access_token` and `refresh_token` are `httpOnly`. In production, they use `secure: true` and `sameSite: 'none'` so cross-site requests work with modern browsers.
+- Frontend domain: `https://mn-muhazizal.vercel.app` — set CORS `origin` in `app.js` to this exact URL and keep `credentials: true`. On the frontend, send requests with `withCredentials: true` so cookies are included.
+- HTTPS: When using `sameSite: 'none'`, browsers require HTTPS for both the frontend and the API; otherwise cookies won’t be set.
+- Optional cookie domain: set `COOKIE_DOMAIN` only when the API and frontend share a parent domain (subdomains, e.g., `api.example.com` and `app.example.com`). It does not enable cookies across unrelated domains (e.g., a Vercel app and a different host).
+- JWT rotation: Access token expires in `1h`, refresh token in `1d`. When the access token is expired, `authMiddleware` verifies the refresh token and rotates both tokens. If the refresh token is expired or invalid, cookies are cleared and the request returns `401 Unauthorized`.
+- Email tokens: Verification and reset-password tokens are 64‑char hex strings that expire in 10 minutes (`generateToken`), stored as BIGINT timestamps for reliable expiry checks.
 - JWT rotation handled server-side.
 - Rich text is sanitized before storing.
 - Redis-backed rate limiting for sensitive endpoints.
