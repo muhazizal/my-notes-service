@@ -7,7 +7,7 @@ Backend API for a notes application with authentication, sessions, email verific
 - Node `20.19.1`
 - PostgreSQL
 - Redis
-- Gmail account (or SMTP provider) for email
+- Resend account for transactional email
 
 ## Setup
 
@@ -22,10 +22,11 @@ Create `.env` from `.env.example` and fill in values.
 See `.env.example` for all required vars:
 
 - App: `NODE_ENV`, `HOST`, `PORT`
-- DB: `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`, `DB_HOST`, `DB_DIALECT`
+- DB: `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`, `DB_HOST`, `DB_DIALECT`, `DB_PORT`
 - JWT: `JWT_SECRET`, `JWT_REFRESH_SECRET`
-- Redis: `REDIS_SOCKET_HOST`, `REDIS_SOCKET_PORT`, `REDIS_PASSWORD`
-- Email: `EMAIL_USER`, `EMAIL_PASSWORD` (use Gmail App Password), `VERIFY_URL`, `RESET_URL`
+- Redis: `REDIS_SOCKET_HOST`, `REDIS_SOCKET_PORT`, `REDIS_USERNAME` (optional), `REDIS_PASSWORD`
+- Resend: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
+- Email links: `VERIFY_URL`, `RESET_URL`
 
 ## Database (Migrations)
 
@@ -44,7 +45,7 @@ npx sequelize-cli migration:generate --name <your-migration-name>
 ## Development
 
 ```bash
-npm run dev
+npm run serve:dev
 ```
 
 In development, the app uses `sequelize.sync()` to update tables quickly.
@@ -55,7 +56,7 @@ In development, the app uses `sequelize.sync()` to update tables quickly.
 
 - Use Supabase for Postgres and host the Node server on Render or Railway.
 - Production uses `sequelize.authenticate()` and relies on migrations (no `sync`).
-- Ensure SSL is enabled for Supabase connections.
+- SSL is enabled in production via `config/database.js` using the provided CA certificate.
 
 ### Prerequisites
 
@@ -75,10 +76,11 @@ cp .env.example .env
 Key variables:
 
 - App: `NODE_ENV=production`, `HOST`, `PORT`
-- DB (Supabase): `DB_HOST`, `DB_PORT=5432`, `DB_DATABASE=postgres`, `DB_USERNAME=postgres`, `DB_PASSWORD`, `DB_DIALECT=postgres`, `DB_SSL=true`
+- DB (Supabase): `DB_HOST`, `DB_PORT=5432`, `DB_DATABASE=postgres`, `DB_USERNAME=postgres`, `DB_PASSWORD`, `DB_DIALECT=postgres`
 - JWT: `JWT_SECRET`, `JWT_REFRESH_SECRET`
-- Email: `EMAIL_USER`, `EMAIL_PASSWORD` (Gmail App Password recommended), `VERIFY_URL`, `RESET_URL`
-- Redis (optional): `REDIS_SOCKET_HOST`, `REDIS_SOCKET_PORT`, `REDIS_PASSWORD`, `REDIS_TLS`
+- Resend: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
+- Email links: `VERIFY_URL`, `RESET_URL`
+- Redis (optional): `REDIS_SOCKET_HOST`, `REDIS_SOCKET_PORT`, `REDIS_USERNAME` (optional), `REDIS_PASSWORD`
 
 ### Migrate Database (Supabase)
 
@@ -102,10 +104,10 @@ NODE_ENV=production node -e "require('./config/database').authenticate().then(()
 - Build runs automatically; Start command:
 
 ```bash
-npm start
+npm run serve:prod
 ```
 
-- Ensure service has HTTPS so `access_token` or `refresh_token` cookie uses `secure: true`.
+- Ensure service has HTTPS so cookies are sent securely.
 
 ### Deploy on Railway (Alternative)
 
@@ -114,7 +116,7 @@ npm start
 - Start command:
 
 ```bash
-npm start
+npm run serve:prod
 ```
 
 ### CORS and Cookies
@@ -140,7 +142,7 @@ During deployment, you can temporarily disable rate limiting by removing `emailB
 ### Troubleshooting
 
 - If Sequelize fails to connect, confirm:
-  - Supabase credentials and `DB_SSL=true`.
+  - Supabase credentials.
   - Migrations ran successfully.
 - For cookie issues across domains:
   - Use HTTPS.
@@ -157,7 +159,7 @@ NODE_ENV=production npx sequelize-cli db:migrate
 - Start:
 
 ```bash
-npm start
+npm run serve:prod
 ```
 
 ## API Overview
@@ -168,7 +170,7 @@ npm start
 
 ## Security
 
-- Sessions: `access_token` and `refresh_token` httpOnly cookies (secure in production)
-- JWT rotation handled server-side
-- Rich text is sanitized before storing
-- Redis-backed rate limiting for sensitive endpoints
+- Cookies: `access_token` and `refresh_token` httpOnly cookies (secure in production).
+- JWT rotation handled server-side.
+- Rich text is sanitized before storing.
+- Redis-backed rate limiting for sensitive endpoints.
