@@ -42,6 +42,7 @@ exports.getNotes = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -77,6 +78,7 @@ exports.createNote = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -125,6 +127,7 @@ exports.getNoteById = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -168,6 +171,7 @@ exports.updateNote = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -203,6 +207,7 @@ exports.deleteNote = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }

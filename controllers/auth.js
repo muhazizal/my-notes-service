@@ -75,6 +75,7 @@ exports.register = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -114,6 +115,7 @@ exports.login = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -130,6 +132,7 @@ exports.logout = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -173,6 +176,7 @@ exports.verify = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -217,6 +221,7 @@ exports.resendVerification = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -260,6 +265,7 @@ exports.forgotPassword = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -300,6 +306,7 @@ exports.resetPassword = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }

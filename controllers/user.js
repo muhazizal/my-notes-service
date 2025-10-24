@@ -47,6 +47,7 @@ exports.getProfile = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -112,6 +113,7 @@ exports.updateProfile = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
@@ -144,6 +146,7 @@ exports.deleteAccount = async (req, res) => {
 		res.status(error.statusCode || 500).json({
 			success: false,
 			message: error.message || 'Internal Server Error',
+			data: error.data || {},
 		})
 	}
 }
