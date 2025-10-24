@@ -2,7 +2,6 @@ require('dotenv').config()
 
 const consola = require('consola')
 const express = require('express')
-const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const cors = require('cors')
 
@@ -28,8 +27,8 @@ app.use(
 app.use(cookieParser())
 
 // Body Parser
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
 
 // Routes
 app.use('/api/notes', noteRoutes)
