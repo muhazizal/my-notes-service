@@ -13,13 +13,13 @@ const setAuthCookies = (res, accessToken, refreshToken) => {
 	res.cookie('access_token', accessToken, {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
-		sameSite: 'lax',
+		sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 		path: '/',
 	})
 	res.cookie('refresh_token', refreshToken, {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
-		sameSite: 'lax',
+		sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 		path: '/',
 	})
 }
@@ -28,13 +28,13 @@ const destroyAuthCookies = (res) => {
 	res.clearCookie('access_token', {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
-		sameSite: 'lax',
+		sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 		path: '/',
 	})
 	res.clearCookie('refresh_token', {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
-		sameSite: 'lax',
+		sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 		path: '/',
 	})
 }
