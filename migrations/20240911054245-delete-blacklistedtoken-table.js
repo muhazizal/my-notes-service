@@ -5,7 +5,7 @@ module.exports = {
 	async up(queryInterface, Sequelize) {
 		const t = await queryInterface.sequelize.transaction()
 		try {
-			await queryInterface.dropTable('BlacklistedTokens')
+			await queryInterface.dropTable('BlacklistedToken')
 			await t.commit()
 		} catch (error) {
 			await t.rollback()
