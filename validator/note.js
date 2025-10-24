@@ -3,11 +3,10 @@ const { validationResult } = require('express-validator')
 exports.validateRequest = (req, res) => {
 	const errors = validationResult(req)
 	if (!errors.isEmpty()) {
-		throw res.status(422).json({
-			message: 'Invalid request',
-			data: errors.array(),
-			code: 422,
-		})
+		const error = new Error('Invalid request')
+		error.statusCode = 422
+		error.data = errors.array()
+		throw error
 	}
 }
 exports.validateNoteExist = (note) => {
