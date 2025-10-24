@@ -131,9 +131,7 @@ exports.deleteAccount = async (req, res) => {
 				transaction: t,
 			})
 
-			const { session_id } = req.cookies
-
-			await destroyAuthSession(res, session_id)
+			await destroyAuthSession(res)
 		})
 
 		await cache.delMany([`profile:user:${req.userId}`, `notes:user:${req.userId}`])

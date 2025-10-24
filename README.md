@@ -105,7 +105,7 @@ NODE_ENV=production node -e "require('./config/database').authenticate().then(()
 npm start
 ```
 
-- Ensure service has HTTPS so `session_id` cookie uses `secure: true`.
+- Ensure service has HTTPS so `access_token` or `refresh_token` cookie uses `secure: true`.
 
 ### Deploy on Railway (Alternative)
 
@@ -168,7 +168,7 @@ npm start
 
 ## Security
 
-- Sessions: `session_id` httpOnly cookie (secure in production)
+- Sessions: `access_token` and `refresh_token` httpOnly cookies (secure in production)
 - JWT rotation handled server-side
 - Rich text is sanitized before storing
 - Redis-backed rate limiting for sensitive endpoints
