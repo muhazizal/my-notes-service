@@ -36,18 +36,5 @@ client.on('end', () => {
 	}
 })()
 
-// Keepalive: periodically PING Redis in production to avoid cold reconnect delays
-if (process.env.NODE_ENV === 'production') {
-	const intervalMs = Number(process.env.REDIS_KEEPALIVE_INTERVAL_MS || 240000) // 4 minutes
-	setInterval(async () => {
-		try {
-			if (client.isOpen) {
-				await client.ping()
-			}
-		} catch (err) {
-			consola.warn({ message: `⚠️ Redis keepalive ping failed: ${err.message}`, badge: true })
-		}
-	}, intervalMs)
-}
 
 module.exports = client

@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser')
 const cors = require('cors')
 
 const sequelize = require('./config/database')
+const redisClient = require('./config/redis')
 
 const noteRoutes = require('./routes/note')
 const authRoutes = require('./routes/auth')
@@ -30,6 +31,38 @@ app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
+// Health endpoint for uptime monitors / platform health checks
+app.get('/api/health', async (req, res) => {
+	const started = Date.now()
+	let db = 'down'
+	let redis = 'down'
+
+	try {
+		await sequelize.query('SELECT 1')
+		db = 'up'
+	} catch (e) {
+		// keep status as 'down'
+	}
+
+	try {
+		if (redisClient?.isOpen) {
+			await redisClient.ping()
+			redis = 'up'
+		}
+	} catch (e) {
+		// keep status as 'down'
+	}
+
+	const status = db === 'up' && redis === 'up' ? 'ok' : 'degraded'
+	res.status(status === 'ok' ? 200 : 503).json({
+		status,
+		db,
+		redis,
+		latencyMs: Date.now() - started,
+		time: new Date().toISOString(),
+	})
+})
+
 // Routes
 app.use('/api/notes', noteRoutes)
 app.use('/api/auth', authRoutes)
@@ -47,18 +80,6 @@ const startServer = () => {
 			message: `✅ NODE_ENV: ${process.env.NODE_ENV}`,
 			badge: true,
 		})
-
-		// DB keep-alive: periodically ping to prevent cold starts after idle
-		if (process.env.NODE_ENV === 'production') {
-			const intervalMs = Number(process.env.DB_KEEPALIVE_INTERVAL_MS || 240000) // default 4 minutes
-			setInterval(async () => {
-				try {
-					await sequelize.query('SELECT 1')
-				} catch (err) {
-					consola.warn({ message: `⚠️ DB keepalive ping failed: ${err.message}`, badge: true })
-				}
-			}, intervalMs)
-		}
 	})
 }
 
