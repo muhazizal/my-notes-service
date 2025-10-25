@@ -47,6 +47,18 @@ const startServer = () => {
 			message: `✅ NODE_ENV: ${process.env.NODE_ENV}`,
 			badge: true,
 		})
+
+		// DB keep-alive: periodically ping to prevent cold starts after idle
+		if (process.env.NODE_ENV === 'production') {
+			const intervalMs = Number(process.env.DB_KEEPALIVE_INTERVAL_MS || 240000) // default 4 minutes
+			setInterval(async () => {
+				try {
+					await sequelize.query('SELECT 1')
+				} catch (err) {
+					consola.warn({ message: `⚠️ DB keepalive ping failed: ${err.message}`, badge: true })
+				}
+			}, intervalMs)
+		}
 	})
 }
 

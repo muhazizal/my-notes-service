@@ -27,6 +27,8 @@ See `.env.example` for all required vars:
 - Redis: `REDIS_SOCKET_HOST`, `REDIS_SOCKET_PORT`, `REDIS_USERNAME` (optional), `REDIS_PASSWORD`
 - Resend: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
 - Email links: `VERIFY_URL`, `RESET_URL`
+- DB pool tuning: `DB_POOL_MIN` (default `1`), `DB_POOL_MAX` (default `10`), `DB_POOL_ACQUIRE` (default `10000` ms), `DB_POOL_IDLE` (default `300000` ms)
+- Keep-alive: `DB_KEEPALIVE_INTERVAL_MS` (default `240000` ms)
 
 ## Database (Migrations)
 
@@ -141,6 +143,10 @@ During deployment, you can temporarily disable rate limiting by removing `emailB
 
 ### Troubleshooting
 
+- First request after long idle takes ~30s: often due to acquiring a new DB connection with `pool.acquire=30000` when all connections have been closed (cold pool). Fix:
+  - Set `DB_POOL_MIN=1` to keep at least one connection open.
+  - Lower `DB_POOL_ACQUIRE` (e.g., `10000`) to cap wait time.
+  - Enable keep-alive with `DB_KEEPALIVE_INTERVAL_MS` (e.g., `240000`) to periodically ping the DB and keep the pool warm.
 - If Sequelize fails to connect, confirm:
   - Supabase credentials.
   - Migrations ran successfully.

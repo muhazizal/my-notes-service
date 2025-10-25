@@ -25,10 +25,10 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 	dialect: config.dialect,
 	dialectOptions,
 	pool: {
-		max: 10,
-		min: 0,
-		acquire: 30000,
-		idle: 10000,
+		max: Number(process.env.DB_POOL_MAX || 10),
+		min: Number(process.env.DB_POOL_MIN || 1),
+		acquire: Number(process.env.DB_POOL_ACQUIRE || 10000),
+		idle: Number(process.env.DB_POOL_IDLE || 300000),
 	},
 	logging: false, // optional, to reduce overhead
 })
