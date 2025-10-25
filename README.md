@@ -29,6 +29,14 @@ See `.env.example` for all required vars:
 - Email links: `VERIFY_URL`, `RESET_URL`
 - DB pool tuning: `DB_POOL_MIN` (default `1`), `DB_POOL_MAX` (default `10`), `DB_POOL_ACQUIRE` (default `10000` ms), `DB_POOL_IDLE` (default `300000` ms)
 - Keep-alive: `DB_KEEPALIVE_INTERVAL_MS` (default `240000` ms)
+- Redis tuning: `REDIS_CONNECT_TIMEOUT_MS` (default `5000` ms), `REDIS_KEEPALIVE_INTERVAL_MS` (default `240000` ms), `REDIS_COMMAND_TIMEOUT_MS` (default `2000` ms)
+
+### Troubleshooting
+
+- First request after long idle takes ~30s:
+  - DB pool cold start: keep one connection (`DB_POOL_MIN=1`), lower acquire (`DB_POOL_ACQUIRE=10000`), enable DB keepalive (`DB_KEEPALIVE_INTERVAL_MS`).
+  - Redis reconnect delay: disable offline queue, set connect timeout (`REDIS_CONNECT_TIMEOUT_MS=5000`), keepalive (`REDIS_KEEPALIVE_INTERVAL_MS`), and fast-fail cache ops (`REDIS_COMMAND_TIMEOUT_MS=2000`).
+  - Host cold start: some platforms (free tiers) sleep the service after idle. Use “Always On”/disable auto-sleep, or ping the service periodically (external uptime monitor).
 
 ## Database (Migrations)
 
@@ -175,6 +183,7 @@ npm run serve:prod
 - User: `/api/user/*` (profile, update, delete, requires auth)
 
 ## Security & Auth
+
 - Cookies: `access_token` and `refresh_token` are `httpOnly`. In production, they use `secure: true` and `sameSite: 'none'` so cross-site requests work with modern browsers.
 - Frontend domain: `https://mn-muhazizal.vercel.app` — set CORS `origin` in `app.js` to this exact URL and keep `credentials: true`. On the frontend, send requests with `withCredentials: true` so cookies are included.
 - HTTPS: When using `sameSite: 'none'`, browsers require HTTPS for both the frontend and the API; otherwise cookies won’t be set.
