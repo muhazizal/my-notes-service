@@ -20,7 +20,6 @@ const {
 	resetPasswordSchema,
 } = require('../schema/auth')
 
-// * TEMPORARY DISABLE
 const { tokenBlastLimiter, emailBlastLimiter } = require('../utils/rate-limiter')
 
 const { authMiddleware } = require('../middleware/auth')
