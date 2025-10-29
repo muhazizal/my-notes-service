@@ -68,7 +68,7 @@ app.use('/api/notes', noteRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
 
-// Start
+// Start (skip when running tests)
 const startServer = () => {
 	app.listen(process.env.PORT || 8000, process.env.HOST || '0.0.0.0', () => {
 		consola.ready({
@@ -83,18 +83,22 @@ const startServer = () => {
 	})
 }
 
-if (process.env.NODE_ENV === 'development') {
-	sequelize
-		.sync()
-		.then(startServer)
-		.catch((error) => {
-			throw new Error(error)
-		})
-} else {
-	sequelize
-		.authenticate()
-		.then(startServer)
-		.catch((error) => {
-			throw new Error(error)
-		})
+if (process.env.NODE_ENV !== 'test') {
+	if (process.env.NODE_ENV === 'development') {
+		sequelize
+			.sync()
+			.then(startServer)
+			.catch((error) => {
+				throw new Error(error)
+			})
+	} else {
+		sequelize
+			.authenticate()
+			.then(startServer)
+			.catch((error) => {
+				throw new Error(error)
+			})
+	}
 }
+
+module.exports = app
