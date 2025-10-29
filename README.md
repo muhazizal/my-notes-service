@@ -55,6 +55,73 @@ Backend API for a notes application with authentication, email verification, pas
 - Health
   - `GET /api/health` returns `{ status: ok|degraded, db, redis, latencyMs }`
 
+## API Reference
+
+- Auth
+
+  - `PUT /api/auth/register`
+    - Body: `{ email, password, username, fullname }`
+    - 201: `{ message, code: 201 }`
+    - Errors: 409/422 on validation, 500 on server
+  - `POST /api/auth/login`
+    - Body: `{ email, password }`
+    - 200: `{ message, code: 200 }` and sets `access_token`, `refresh_token` cookies
+    - Errors: 401 invalid credentials or unverified email, 422 on validation
+  - `POST /api/auth/logout`
+    - 200: `{ message, code: 200 }` and clears auth cookies
+  - `GET /api/auth/check-auth-session`
+    - 200: `{ message, headers, cookies }`
+  - `GET /api/auth/verify/:token`
+    - 200: `{ message, code: 200 }`
+    - Errors: 401 invalid/expired token, 409 already verified
+  - `POST /api/auth/resend-verification`
+    - Body: `{ token }` (previous verification token)
+    - 200: `{ message, code: 200 }`
+  - `POST /api/auth/forgot-password`
+    - Body: `{ email }`
+    - 200: `{ message, code: 200 }`
+    - Errors: 422 if email not found
+  - `POST /api/auth/reset-password/:token`
+    - Body: `{ password }`
+    - 200: `{ message, code: 200 }`
+    - Errors: 401 invalid/expired token
+
+- Notes (auth required)
+
+  - `GET /api/notes`
+    - 200: `{ message, data: Note[], code: 200 }`
+  - `POST /api/notes`
+    - Body: `{ title, description }`
+    - 201: `{ message, data: Note, code: 201 }`
+  - `GET /api/notes/:id`
+    - 200: `{ message, data: Note, code: 200 }`
+    - Errors: 404 if not found
+  - `PUT /api/notes/:id`
+    - Body: `{ title, description }`
+    - 201: `{ message, data: Note, code: 201 }`
+  - `DELETE /api/notes/:id`
+    - 200: `{ message, code: 200 }`
+
+- User (auth required)
+
+  - `GET /api/user/profile`
+    - 200: `{ message, data: { username, email, fullname, isVerified }, code: 200 }`
+  - `PUT /api/user/profile`
+    - Body: `{ username, email, fullname }`
+    - 201: `{ message, data: { username, email, fullname }, code: 201 }`
+    - Note: resets `isVerified` when email changes
+  - `DELETE /api/user`
+    - 200: `{ message, code: 200 }`
+
+- Health
+  - `GET /api/health`
+    - 200: `{ status: 'ok'|'degraded', db: 'ok'|'error', redis: 'ok'|'error', latencyMs }`
+
+Note shapes
+
+- `Note`: `{ id, title, description, raw_description, createdAt, updatedAt }`
+- Error responses: `{ success: false, message, data }` with status `401|404|409|422|500`
+
 ## Environment Variables
 
 Create `.env` from `.env.example` and fill values. Key groups:

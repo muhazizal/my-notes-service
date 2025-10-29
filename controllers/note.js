@@ -21,15 +21,10 @@ exports.getNotes = async (req, res) => {
 			})
 		}
 
-		const result = await NoteModel.sequelize.transaction(async (t) => {
-			return await NoteModel.findAll({
-				where: {
-					userId,
-				},
-				attributes: ['id', 'title', 'description', 'raw_description', 'createdAt', 'updatedAt'],
-				order: [['updatedAt', 'DESC']],
-				transaction: t,
-			})
+		const result = await NoteModel.findAll({
+			where: { userId },
+			attributes: ['id', 'title', 'description', 'raw_description', 'createdAt', 'updatedAt'],
+			order: [['updatedAt', 'DESC']],
 		})
 
 		await cache.setJSON(cacheKey, result, 60)
@@ -116,22 +111,14 @@ exports.getNoteById = async (req, res) => {
 			})
 		}
 
-		const result = await NoteModel.sequelize.transaction(async (t) => {
-			validateRequest(req, res)
+		validateRequest(req, res)
 
-			const note = await NoteModel.findOne({
-				where: {
-					id,
-					userId,
-				},
-				attributes: ['id', 'title', 'description', 'raw_description', 'createdAt', 'updatedAt'],
-				transaction: t,
-			})
-
-			validateNoteExist(note)
-
-			return note
+		const result = await NoteModel.findOne({
+			where: { id, userId },
+			attributes: ['id', 'title', 'description', 'raw_description', 'createdAt', 'updatedAt'],
 		})
+
+		validateNoteExist(result)
 
 		await cache.setJSON(cacheKey, result, 60)
 

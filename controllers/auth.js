@@ -26,25 +26,26 @@ const consola = require('consola')
 
 exports.register = async (req, res) => {
 	try {
+		validateRequest(req, res)
+
+		const { email, password, username, fullname } = req.body
+		let emailToNotify = email
+		let verificationTokenForEmail = null
+
 		await UserModel.sequelize.transaction(async (t) => {
-			validateRequest(req, res)
-
-			const { email, password, username, fullname } = req.body
-
-			let user = await UserModel.findOne({
-				where: {
-					[Op.or]: [{ email }, { username }],
-				},
+			let existing = await UserModel.findOne({
+				where: { [Op.or]: [{ email }, { username }] },
 				transaction: t,
 			})
 
-			validateUserExist(user)
+			validateUserExist(existing)
 
 			const salt = await bcrypt.genSalt(10)
 			const hashedPassword = await bcrypt.hash(password, salt)
 			const { token, tokenExpires } = generateToken()
+			verificationTokenForEmail = token
 
-			user = await UserModel.create(
+			await UserModel.create(
 				{
 					email,
 					password: hashedPassword,
@@ -55,25 +56,20 @@ exports.register = async (req, res) => {
 				},
 				{ transaction: t }
 			)
-
-			// Send email AFTER transaction commit
-			try {
-				await sendEmailVerification(req, token, email)
-			} catch (emailErr) {
-				consola.warn({
-					event: 'email_send_verification_failed',
-					route: 'register',
-					email: userEmail,
-					tokenLength: verificationToken?.length,
-					error: emailErr.message,
-				})
-			}
-
-			res.status(201).json({
-				message: 'Success register user, please verify your email',
-				code: 201,
-			})
 		})
+
+		// Send email after successful commit
+		try {
+			await sendEmailVerification(req, verificationTokenForEmail, emailToNotify)
+		} catch (emailErr) {
+			consola.warn({
+				event: 'email_send_verification_failed',
+				route: 'register',
+				email: emailToNotify,
+				tokenLength: String(verificationTokenForEmail?.length || 0),
+				error: emailErr.message,
+			})
+		}
 
 		res.status(201).json({
 			message: 'Success register user, please verify your email',
@@ -223,15 +219,15 @@ exports.verify = async (req, res) => {
 
 exports.resendVerification = async (req, res) => {
 	try {
+		validateRequest(req, res)
+
+		const { token } = req.body
+		let targetEmail = null
+		let newTokenForEmail = null
+
 		await UserModel.sequelize.transaction(async (t) => {
-			validateRequest(req, res)
-
-			const { token } = req.body
-
 			const user = await UserModel.findOne({
-				where: {
-					verificationToken: token,
-				},
+				where: { verificationToken: token },
 				transaction: t,
 			})
 
@@ -239,6 +235,8 @@ exports.resendVerification = async (req, res) => {
 			validateUserVerified(user.isVerified)
 
 			const { token: newToken, tokenExpires } = generateToken()
+			newTokenForEmail = newToken
+			targetEmail = user.email
 
 			user.verificationToken = newToken
 			user.verificationTokenExpires = tokenExpires
@@ -246,15 +244,15 @@ exports.resendVerification = async (req, res) => {
 			await user.save({ transaction: t })
 		})
 
-		// Send email AFTER transaction commit
+		// Send email after commit
 		try {
-			await sendEmailVerification(req, newToken, user.email)
+			await sendEmailVerification(req, newTokenForEmail, targetEmail)
 		} catch (emailErr) {
 			consola.warn({
 				event: 'email_send_verification_failed',
 				route: 'resendVerification',
 				email: targetEmail,
-				tokenLength: newTokenForEmail?.length,
+				tokenLength: String(newTokenForEmail?.length || 0),
 				error: emailErr.message,
 			})
 		}
@@ -282,21 +280,22 @@ exports.resendVerification = async (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
 	try {
+		validateRequest(req, res)
+
+		const { email } = req.body
+		let targetEmail = email
+		let resetTokenForEmail = null
+
 		await UserModel.sequelize.transaction(async (t) => {
-			validateRequest(req, res)
-
-			const { email } = req.body
-
 			const user = await UserModel.findOne({
-				where: {
-					email,
-				},
+				where: { email },
 				transaction: t,
 			})
 
 			validateUserNotExist(user, 422)
 
 			const { token, tokenExpires } = generateToken()
+			resetTokenForEmail = token
 
 			user.resetPasswordToken = token
 			user.resetPasswordTokenExpires = tokenExpires
@@ -304,14 +303,14 @@ exports.forgotPassword = async (req, res) => {
 			await user.save({ transaction: t })
 		})
 
-		// Send email AFTER transaction commit
+		// Send email after commit
 		try {
-			await sendEmailResetPassword(req, token, email)
+			await sendEmailResetPassword(req, resetTokenForEmail, targetEmail)
 		} catch (emailErr) {
 			consola.warn({
 				event: 'email_send_reset_failed',
 				email: targetEmail,
-				tokenLength: resetTokenForEmail?.length,
+				tokenLength: String(resetTokenForEmail?.length || 0),
 				error: emailErr.message,
 			})
 		}

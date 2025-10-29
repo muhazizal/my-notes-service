@@ -26,16 +26,11 @@ exports.getProfile = async (req, res) => {
 			})
 		}
 
-		const result = await UserModel.sequelize.transaction(async (t) => {
-			const user = await UserModel.findByPk(userId, {
-				transaction: t,
-				attributes: ['username', 'email', 'fullname', 'isVerified'],
-			})
-
-			validateUserNotExist(user)
-
-			return user
+		const result = await UserModel.findByPk(userId, {
+			attributes: ['username', 'email', 'fullname', 'isVerified'],
 		})
+
+		validateUserNotExist(result)
 
 		await cache.setJSON(cacheKey, result, 120)
 
