@@ -1,46 +1,90 @@
-# My Notes Service (Express + Sequelize)
+# My Notes Service (Express + Sequelize + Redis)
 
-Backend API for a notes application with authentication, sessions, email verification, password resets, and Redis rate limiting.
+Backend API for a notes application with authentication, email verification, password resets, and Redis‑backed rate limiting. Built with Express, Sequelize (PostgreSQL), Redis, and Resend.
 
-## Prerequisites
+## Overview
 
+- Auth with HTTP‑only cookies and automatic access/refresh rotation
+- Notes CRUD with HTML sanitization and lightweight Redis caching
+- Email verification and password reset via Resend
+- Robust rate limiting using Redis with safe in‑memory fallback
+- Health endpoint at `/api/health` for Render health checks and uptime monitors
+- Production‑ready Postgres config with SSL (suitable for Supabase)
+
+## Tech Stack
+
+- Express, express‑validator, cookie‑parser, CORS
+- Sequelize + PostgreSQL
+- Redis (`redis`, `rate-limit-redis`, `express-rate-limit`)
+- Resend (transactional email)
 - Node `20.19.1`
-- PostgreSQL
-- Redis
-- Resend account for transactional email
 
-## Setup
+## Project Structure
 
-```bash
-npm install
-```
+- `app.js`: Express app, CORS, cookies, parsers, `/api/health`, route mounting
+- `routes/*`: `auth`, `notes`, `user`
+- `controllers/*`: request handlers and DB transactions
+- `middleware/auth.js`: JWT validation and rotation using cookies
+- `models/*`: Sequelize models and associations
+- `config/database.js`: Postgres connection (SSL in production) + tuned pool
+- `config/redis.js`: Redis client with fast‑fail, reconnect logs, and readiness helper
+- `utils/cache.js`: Safe Redis JSON get/set/del with command timeouts
+- `utils/rate-limiter.js`: RedisStore limiter with in‑memory fallback when Redis offline
 
-Create `.env` from `.env.example` and fill in values.
+## API Summary
+
+- Auth (`/api/auth`)
+  - `PUT /register`
+  - `POST /login`
+  - `GET /verify/:token`
+  - `POST /resend-verification` (rate‑limited)
+  - `POST /forgot-password` (rate‑limited)
+  - `POST /reset-password/:token`
+  - `POST /logout`
+  - `GET /check-auth-session`
+- Notes (`/api/notes`, auth required)
+  - `GET /` list
+  - `POST /` create
+  - `GET /:id` read
+  - `PUT /:id` update
+  - `DELETE /:id` delete
+- User (`/api/user`, auth required)
+  - `GET /profile`
+  - `PUT /profile`
+  - `DELETE /`
+- Health
+  - `GET /api/health` returns `{ status: ok|degraded, db, redis, latencyMs }`
 
 ## Environment Variables
 
-See `.env.example` for all required vars:
+Create `.env` from `.env.example` and fill values. Key groups:
 
-- App: `NODE_ENV`, `HOST`, `PORT`
+- App: `NODE_ENV`, `HOST`, `PORT`, `CORS_ORIGIN`
 - DB: `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`, `DB_HOST`, `DB_DIALECT`, `DB_PORT`
+- DB pool tuning: `DB_POOL_MIN` (default `1`), `DB_POOL_MAX` (default `10`), `DB_POOL_ACQUIRE` (default `10000` ms), `DB_POOL_IDLE` (default `300000` ms)
 - JWT: `JWT_SECRET`, `JWT_REFRESH_SECRET`
-- Redis: `REDIS_SOCKET_HOST`, `REDIS_SOCKET_PORT`, `REDIS_USERNAME` (optional), `REDIS_PASSWORD`
 - Resend: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
 - Email links: `VERIFY_URL`, `RESET_URL`
-- DB pool tuning: `DB_POOL_MIN` (default `1`), `DB_POOL_MAX` (default `10`), `DB_POOL_ACQUIRE` (default `10000` ms), `DB_POOL_IDLE` (default `300000` ms)
-- Keep-alive: `DB_KEEPALIVE_INTERVAL_MS` (default `240000` ms)
-- Redis tuning: `REDIS_CONNECT_TIMEOUT_MS` (default `5000` ms), `REDIS_KEEPALIVE_INTERVAL_MS` (default `240000` ms), `REDIS_COMMAND_TIMEOUT_MS` (default `2000` ms)
+- Redis: `REDIS_SOCKET_HOST`, `REDIS_SOCKET_PORT`, `REDIS_USERNAME` (optional), `REDIS_PASSWORD`
+- Redis tuning: `REDIS_CONNECT_TIMEOUT_MS` (default `5000` ms), `REDIS_COMMAND_TIMEOUT_MS` (default `2000` ms), `REDIS_READY_TIMEOUT_MS` (optional)
 
-### Troubleshooting
+Note: Periodic DB/Redis keep‑alive intervals were removed. Prefer platform health checks hitting `/api/health` and “Always On” hosting to avoid cold starts.
 
-- First request after long idle takes ~30s:
-  - DB pool cold start: keep one connection (`DB_POOL_MIN=1`), lower acquire (`DB_POOL_ACQUIRE=10000`), enable DB keepalive (`DB_KEEPALIVE_INTERVAL_MS`).
-  - Redis reconnect delay: disable offline queue, set connect timeout (`REDIS_CONNECT_TIMEOUT_MS=5000`), keepalive (`REDIS_KEEPALIVE_INTERVAL_MS`), and fast-fail cache ops (`REDIS_COMMAND_TIMEOUT_MS=2000`).
-  - Host cold start: some platforms (free tiers) sleep the service after idle. Use “Always On”/disable auto-sleep, or ping the service periodically (external uptime monitor).
+## Quickstart (Local)
+
+```bash
+npm install
+cp .env.example .env
+# Fill in .env values
+npx sequelize-cli db:migrate
+npm run serve:dev
+```
+
+Dev uses `sequelize.sync()`; production uses `authenticate()` + migrations.
 
 ## Database (Migrations)
 
-- Initialize and migrate:
+- Run migrations:
 
 ```bash
 npx sequelize-cli db:migrate
@@ -52,119 +96,57 @@ npx sequelize-cli db:migrate
 npx sequelize-cli migration:generate --name <your-migration-name>
 ```
 
-## Development
-
-```bash
-npm run serve:dev
-```
-
-In development, the app uses `sequelize.sync()` to update tables quickly.
-
 ## Deployment
 
-### Overview
+### Render (API)
 
-- Use Supabase for Postgres and host the Node server on Render or Railway.
-- Production uses `sequelize.authenticate()` and relies on migrations (no `sync`).
-- SSL is enabled in production via `config/database.js` using the provided CA certificate.
+- Create a Web Service, connect your repo
+- Start command: `npm run serve:prod`
+- Health Check Path: `/api/health`
+- Set environment variables from `.env`
+- Recommended: paid plan for “Always On”; free tier may sleep on idle
 
-### Prerequisites
+### Supabase (Postgres)
 
-- Supabase project created; note DB connection (host, port, database, user, password).
-- Hosting account (Render or Railway).
-- Frontend URLs for email links (`VERIFY_URL`, `RESET_URL`).
-- Optional Redis provider (e.g., Upstash) for rate limiting.
-
-### Environment Variables
-
-Create `.env` from `.env.example` and fill in production values:
-
-```bash
-cp .env.example .env
-```
-
-Key variables:
-
-- App: `NODE_ENV=production`, `HOST`, `PORT`
-- DB (Supabase): `DB_HOST`, `DB_PORT=5432`, `DB_DATABASE=postgres`, `DB_USERNAME=postgres`, `DB_PASSWORD`, `DB_DIALECT=postgres`
-- JWT: `JWT_SECRET`, `JWT_REFRESH_SECRET`
-- Resend: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
-- Email links: `VERIFY_URL`, `RESET_URL`
-- Redis (optional): `REDIS_SOCKET_HOST`, `REDIS_SOCKET_PORT`, `REDIS_USERNAME` (optional), `REDIS_PASSWORD`
-
-### Migrate Database (Supabase)
-
-Run migrations against Supabase:
+- Use supplied SSL CA (enabled by default in production)
+- Run migrations against Supabase:
 
 ```bash
 NODE_ENV=production npx sequelize-cli db:migrate
 ```
 
-Verify DB connectivity:
+### Vercel (Frontend)
 
-```bash
-NODE_ENV=production node -e "require('./config/database').authenticate().then(()=>console.log('DB OK')).catch(e=>{console.error(e);process.exit(1)})"
-```
+- Set `CORS_ORIGIN` in the API to your Vercel domain
+- Ensure HTTPS on both API and frontend; send requests with `withCredentials: true`
 
-### Deploy on Render (Recommended)
+## CORS and Cookies
 
-- Push repo to GitHub.
-- In Render, create a new Web Service and connect the repo.
-- Set environment variables from `.env`.
-- Build runs automatically; Start command:
+- CORS is configured with `credentials: true` and `origin: process.env.CORS_ORIGIN`
+- Cookies use `httpOnly`, `secure` in production, and `sameSite: 'none'`
 
-```bash
-npm run serve:prod
-```
+## Rate Limiting & Redis
 
-- Ensure service has HTTPS so cookies are sent securely.
+- Sensitive auth routes use `express-rate-limit` + `rate-limit-redis`
+- If Redis is offline at startup, the limiter falls back to in‑memory (no crash)
+- Cache utilities skip Redis when not ready and time out commands quickly
+- Redis client logs connection state: connect, ready, reconnecting, end
 
-### Deploy on Railway (Alternative)
+## Troubleshooting
 
-- Create a new service, connect the repo.
-- Add env variables from `.env`.
-- Start command:
-
-```bash
-npm run serve:prod
-```
-
-### CORS and Cookies
-
-- CORS is configured in `app.js` with `credentials: true`. Set `origin` to your frontend domain in production.
-- Ensure frontend uses `withCredentials=true` so cookies are sent.
-
-### Email Links
-
-- `VERIFY_URL` should point to your frontend verification page.
-- `RESET_URL` should point to your frontend password reset page.
-
-### Rate Limiter (Temporary Disable)
-
-During deployment, you can temporarily disable rate limiting by removing `emailBlastLimiter` and `tokenBlastLimiter` middleware from `routes/auth.js`. Re-enable them once production is stable.
-
-### Post-Deploy Checks
-
-- Hit `/api/auth/check-auth-session` after login to confirm cookie/session is present.
-- Test email flows (verify/reset) against production frontend URLs.
-- Confirm DB writes/read via `/api/notes` endpoints.
-
-### Troubleshooting
-
-- First request after long idle takes ~30s: often due to acquiring a new DB connection with `pool.acquire=30000` when all connections have been closed (cold pool). Fix:
-  - Set `DB_POOL_MIN=1` to keep at least one connection open.
-  - Lower `DB_POOL_ACQUIRE` (e.g., `10000`) to cap wait time.
-  - Enable keep-alive with `DB_KEEPALIVE_INTERVAL_MS` (e.g., `240000`) to periodically ping the DB and keep the pool warm.
-- If Sequelize fails to connect, confirm:
-  - Supabase credentials.
-  - Migrations ran successfully.
-- For cookie issues across domains:
-  - Use HTTPS.
-  - Ensure CORS `origin` is your frontend URL and `credentials: true` is set.
+- 30s delay on first request after idle
+  - DB pool cold start: set `DB_POOL_MIN=1` and `DB_POOL_ACQUIRE=10000`
+  - Platform cold start (free tiers): enable “Always On” or ping `/api/health` periodically
+- Redis `ClientOfflineError`
+  - Expected during boot if Redis not yet connected; limiter falls back to memory
+  - Check logs for “Redis reconnecting…” and “Redis client ready”
+- Cookies not set
+  - Use HTTPS and set `CORS_ORIGIN` to the exact frontend origin
+  - Frontend must send requests with `withCredentials: true`
 
 ## Production
 
-- Apply migrations before starting the server:
+- Apply migrations before start:
 
 ```bash
 NODE_ENV=production npx sequelize-cli db:migrate
@@ -176,20 +158,8 @@ NODE_ENV=production npx sequelize-cli db:migrate
 npm run serve:prod
 ```
 
-## API Overview
-
-- Auth: `/api/auth/*` (register, login, verify, resend-verification, forgot-password, reset-password, logout)
-- Notes: `/api/notes/*` (CRUD, requires auth)
-- User: `/api/user/*` (profile, update, delete, requires auth)
-
 ## Security & Auth
 
-- Cookies: `access_token` and `refresh_token` are `httpOnly`. In production, they use `secure: true` and `sameSite: 'none'` so cross-site requests work with modern browsers.
-- Frontend domain: `https://mn-muhazizal.vercel.app` — set CORS `origin` in `app.js` to this exact URL and keep `credentials: true`. On the frontend, send requests with `withCredentials: true` so cookies are included.
-- HTTPS: When using `sameSite: 'none'`, browsers require HTTPS for both the frontend and the API; otherwise cookies won’t be set.
-- Optional cookie domain: set `COOKIE_DOMAIN` only when the API and frontend share a parent domain (subdomains, e.g., `api.example.com` and `app.example.com`). It does not enable cookies across unrelated domains (e.g., a Vercel app and a different host).
-- JWT rotation: Access token expires in `1h`, refresh token in `1d`. When the access token is expired, `authMiddleware` verifies the refresh token and rotates both tokens. If the refresh token is expired or invalid, cookies are cleared and the request returns `401 Unauthorized`.
-- Email tokens: Verification and reset-password tokens are 64‑char hex strings that expire in 10 minutes (`generateToken`), stored as BIGINT timestamps for reliable expiry checks.
-- JWT rotation handled server-side.
-- Rich text is sanitized before storing.
-- Redis-backed rate limiting for sensitive endpoints.
+- Access and refresh tokens in HTTP‑only cookies; rotation handled in middleware
+- Email verification and reset tokens are short‑lived and validated server‑side
+- Rich HTML content is sanitized before storage
