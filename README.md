@@ -8,15 +8,18 @@ Backend API for a notes application with authentication, email verification, pas
 - Notes CRUD with HTML sanitization and lightweight Redis caching
 - Email verification and password reset via Resend
 - Robust rate limiting using Redis with safe in‑memory fallback
-- Health endpoint at `/api/health` for Render health checks and uptime monitors
+- Health endpoint at `/api/health` for Render health checks and uptime monitors (includes status, DB/Redis state, latency, and time)
 - Production‑ready Postgres config with SSL (suitable for Supabase)
+- Strict request validation on every route using `express-validator`
+- Comprehensive tests (unit + integration) with Jest + Supertest using in‑memory SQLite
 
 ## Tech Stack
 
 - Express, express‑validator, cookie‑parser, CORS
-- Sequelize + PostgreSQL
+- Sequelize + PostgreSQL (production) / SQLite (tests, in‑memory)
 - Redis (`redis`, `rate-limit-redis`, `express-rate-limit`)
 - Resend (transactional email)
+- Testing: Jest + Supertest with SQLite in‑memory
 - Node `20.19.1`
 
 ## Project Structure
