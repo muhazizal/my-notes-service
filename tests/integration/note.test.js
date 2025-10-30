@@ -2,6 +2,10 @@ const request = require('supertest')
 const app = require('../../app')
 const sequelize = require('../../config/database')
 const { User, Note } = require('../../models')
+const { registerVerifyLogin } = require('./helpers/auth')
+const { resetUsers, resetNotes } = require('./helpers/db')
+const { assertInvalidRequest, collectMessages } = require('./helpers/assert')
+const { makeUserPayload } = require('./helpers/factory')
 
 describe('note integration', () => {
 	beforeAll(async () => {
@@ -13,43 +17,19 @@ describe('note integration', () => {
 	})
 
 	beforeEach(async () => {
-		await Note.destroy({ where: {} })
-		await User.destroy({ where: {} })
+		await resetNotes()
+		await resetUsers()
 	})
-
-	const registerVerifyLogin = async (agent, { email, password, username, fullname }) => {
-		const reg = await agent.put('/api/auth/register').send({ email, password, username, fullname })
-		expect(reg.status).toBe(201)
-
-		let user = await User.findOne({ where: { email } })
-		expect(user).toBeTruthy()
-		const token = user.verificationToken
-		expect(token).toBeTruthy()
-
-		const ver = await agent.get(`/api/auth/verify/${token}`)
-		expect(ver.status).toBe(200)
-		user = await User.findOne({ where: { email } })
-		expect(user.isVerified).toBe(true)
-
-		const login = await agent.post('/api/auth/login').send({ email, password })
-		expect(login.status).toBe(200)
-		const setCookie = login.headers['set-cookie'] || []
-		expect(setCookie.join(';')).toContain('access_token=')
-		expect(setCookie.join(';')).toContain('refresh_token=')
-	}
 
 	test('end-to-end: list -> create (invalid/valid) -> get -> update (invalid/valid) -> delete (invalid/valid)', async () => {
 		const agent = request.agent(app)
 
 		// Auth: register, verify, login
-		const email = 'noteuser@example.com'
-		const password = 'Passw0rd!'
-		await registerVerifyLogin(agent, {
-			email,
-			password,
-			username: 'noteuser',
+		const { email, password, username, fullname } = makeUserPayload('noteuser', {
+			email: 'noteuser@example.com',
 			fullname: 'Note User',
 		})
+		await registerVerifyLogin(agent, { email, password, username, fullname })
 
 		// List notes: empty initially
 		const listEmpty = await agent.get('/api/notes')
@@ -60,10 +40,8 @@ describe('note integration', () => {
 
 		// Create: invalid (missing title & description)
 		const createInvalid = await agent.post('/api/notes').send({})
-		expect(createInvalid.status).toBe(422)
-		expect(createInvalid.body.success).toBe(false)
-		expect(createInvalid.body.message).toBe('Invalid request')
-		const msgs = (createInvalid.body.data || []).map((e) => e.msg).sort()
+		assertInvalidRequest(createInvalid)
+		const msgs = collectMessages(createInvalid, { sort: true })
 		expect(msgs).toEqual(['Description is empty', 'Title is empty'])
 
 		// Create: valid, HTML sanitized and raw preserved
@@ -97,10 +75,8 @@ describe('note integration', () => {
 
 		// Update: invalid (missing title & description)
 		const updateInvalid = await agent.put(`/api/notes/${created.id}`).send({})
-		expect(updateInvalid.status).toBe(422)
-		expect(updateInvalid.body.success).toBe(false)
-		expect(updateInvalid.body.message).toBe('Invalid request')
-		const msgsUpd = (updateInvalid.body.data || []).map((e) => e.msg).sort()
+		assertInvalidRequest(updateInvalid)
+		const msgsUpd = collectMessages(updateInvalid, { sort: true })
 		expect(msgsUpd).toEqual(['Description is empty', 'Title is empty'])
 
 		// Update: valid, HTML sanitized
