@@ -36,21 +36,8 @@ const {
 const cache = require('../../../utils/cache')
 const consola = require('consola')
 const userController = require('../../../controllers/user')
-
-const makeRes = () => {
-	const res = {}
-	res.statusCode = 200
-	res.body = null
-	res.status = function (code) {
-		this.statusCode = code
-		return this
-	}
-	res.json = function (payload) {
-		this.body = payload
-		return this
-	}
-	return res
-}
+const { makeRes, makeReq } = require('../helpers/http')
+const { assertInternalServerErrorWithDefaultData, assertError } = require('../helpers/assert')
 
 describe('controllers/user.js - getProfile', () => {
 	beforeEach(() => {
@@ -60,7 +47,7 @@ describe('controllers/user.js - getProfile', () => {
 	test('returns cached profile when present', async () => {
 		const cached = { username: 'u', email: 'e', fullname: 'f', isVerified: true }
 		cache.getJSON.mockResolvedValueOnce(cached)
-		const req = { userId: 1, method: 'GET', originalUrl: '/api/user/profile' }
+    const req = makeReq({ userId: 1, method: 'GET', originalUrl: '/api/user/profile' })
 		const res = makeRes()
 		await userController.getProfile(req, res)
 		expect(res.statusCode).toBe(200)
@@ -73,7 +60,7 @@ describe('controllers/user.js - getProfile', () => {
 		cache.getJSON.mockResolvedValueOnce(null)
 		const result = { username: 'u2', email: 'e2', fullname: 'f2', isVerified: false }
 		User.findByPk.mockResolvedValueOnce(result)
-		const req = { userId: 2, method: 'GET', originalUrl: '/api/user/profile' }
+    const req = makeReq({ userId: 2, method: 'GET', originalUrl: '/api/user/profile' })
 		const res = makeRes()
 		await userController.getProfile(req, res)
 		expect(validateUserNotExist).toHaveBeenCalledWith(result)
@@ -89,24 +76,22 @@ describe('controllers/user.js - getProfile', () => {
 		err.data = { x: 1 }
 		User.findByPk.mockRejectedValueOnce(err)
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { userId: 3, method: 'GET', originalUrl: '/api/user/profile' }
+    const req = makeReq({ userId: 3, method: 'GET', originalUrl: '/api/user/profile' })
 		const res = makeRes()
 		await userController.getProfile(req, res)
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(503)
-		expect(res.body).toEqual({ success: false, message: 'boom', data: { x: 1 } })
+    expect(errorSpy).toHaveBeenCalled()
+    assertError(res, 503, 'boom', { x: 1 })
 	})
 
 	test('catch falls back to defaults when error lacks fields', async () => {
 		cache.getJSON.mockResolvedValueOnce(null)
 		User.findByPk.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { userId: 4, method: 'GET', originalUrl: '/api/user/profile' }
-		const res = makeRes()
-		await userController.getProfile(req, res)
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+    const req = makeReq({ userId: 4, method: 'GET', originalUrl: '/api/user/profile' })
+    const res = makeRes()
+    await userController.getProfile(req, res)
+    expect(errorSpy).toHaveBeenCalled()
+    assertInternalServerErrorWithDefaultData(res)
 	})
 })
 
@@ -126,12 +111,12 @@ describe('controllers/user.js - updateProfile', () => {
 			save: jest.fn().mockResolvedValue(),
 		}
 		User.findByPk.mockResolvedValueOnce(user)
-		const req = {
-			userId: 5,
-			method: 'PUT',
-			originalUrl: '/api/user/profile',
-			body: { username: 'new', email: 'same@example.com', fullname: 'New' },
-		}
+    const req = makeReq({
+        userId: 5,
+        method: 'PUT',
+        originalUrl: '/api/user/profile',
+        body: { username: 'new', email: 'same@example.com', fullname: 'New' },
+    })
 		const res = makeRes()
 		await userController.updateProfile(req, res)
 		expect(validateRequest).toHaveBeenCalled()
@@ -157,12 +142,12 @@ describe('controllers/user.js - updateProfile', () => {
 			save: jest.fn().mockResolvedValue(),
 		}
 		User.findByPk.mockResolvedValueOnce(user)
-		const req = {
-			userId: 6,
-			method: 'PUT',
-			originalUrl: '/api/user/profile',
-			body: { username: 'new', email: 'new@example.com', fullname: 'New' },
-		}
+    const req = makeReq({
+        userId: 6,
+        method: 'PUT',
+        originalUrl: '/api/user/profile',
+        body: { username: 'new', email: 'new@example.com', fullname: 'New' },
+    })
 		const res = makeRes()
 		await userController.updateProfile(req, res)
 		expect(user.isVerified).toBe(false)
@@ -183,12 +168,12 @@ describe('controllers/user.js - updateProfile', () => {
 			save: jest.fn().mockResolvedValue(),
 		}
 		User.findByPk.mockResolvedValueOnce(user)
-		const req = {
-			userId: 7,
-			method: 'PUT',
-			originalUrl: '/api/user/profile',
-			body: { username: 'new', email: 'new@example.com', fullname: 'New' },
-		}
+    const req = makeReq({
+        userId: 7,
+        method: 'PUT',
+        originalUrl: '/api/user/profile',
+        body: { username: 'new', email: 'new@example.com', fullname: 'New' },
+    })
 		const res = makeRes()
 		await userController.updateProfile(req, res)
 		expect(validateUsernameExist).toHaveBeenCalledWith('taken', 'new')
@@ -204,33 +189,31 @@ describe('controllers/user.js - updateProfile', () => {
 			throw e
 		})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
-			userId: 8,
-			method: 'PUT',
-			originalUrl: '/api/user/profile',
-			body: { username: 'n', email: 'e', fullname: 'f' },
-		}
+    const req = makeReq({
+        userId: 8,
+        method: 'PUT',
+        originalUrl: '/api/user/profile',
+        body: { username: 'n', email: 'e', fullname: 'f' },
+    })
 		const res = makeRes()
 		await userController.updateProfile(req, res)
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(422)
-		expect(res.body).toEqual({ success: false, message: 'bad', data: { f: 'x' } })
+    expect(errorSpy).toHaveBeenCalled()
+    assertError(res, 422, 'bad', { f: 'x' })
 	})
 
 	test('catch falls back to defaults when DB throws', async () => {
 		User.findOne.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
-			userId: 9,
-			method: 'PUT',
-			originalUrl: '/api/user/profile',
-			body: { username: 'n', email: 'e', fullname: 'f' },
-		}
-		const res = makeRes()
-		await userController.updateProfile(req, res)
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+    const req = makeReq({
+        userId: 9,
+        method: 'PUT',
+        originalUrl: '/api/user/profile',
+        body: { username: 'n', email: 'e', fullname: 'f' },
+    })
+    const res = makeRes()
+    await userController.updateProfile(req, res)
+    expect(errorSpy).toHaveBeenCalled()
+    assertInternalServerErrorWithDefaultData(res)
 	})
 
 	test('validators throw propagate to catch with provided fields', async () => {
@@ -242,21 +225,16 @@ describe('controllers/user.js - updateProfile', () => {
 			throw e
 		})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
-			userId: 10,
-			method: 'PUT',
-			originalUrl: '/api/user/profile',
-			body: { username: 'new', email: 'old@example.com', fullname: 'New' },
-		}
+    const req = makeReq({
+        userId: 10,
+        method: 'PUT',
+        originalUrl: '/api/user/profile',
+        body: { username: 'new', email: 'old@example.com', fullname: 'New' },
+    })
 		const res = makeRes()
 		await userController.updateProfile(req, res)
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(409)
-		expect(res.body).toEqual({
-			success: false,
-			message: 'username taken',
-			data: { field: 'username' },
-		})
+    expect(errorSpy).toHaveBeenCalled()
+    assertError(res, 409, 'username taken', { field: 'username' })
 	})
 })
 
@@ -268,7 +246,7 @@ describe('controllers/user.js - deleteAccount', () => {
 	test('deletes account, destroys session, clears caches', async () => {
 		const user = { id: 12, destroy: jest.fn().mockResolvedValue() }
 		User.findByPk.mockResolvedValueOnce(user)
-		const req = { userId: 12, method: 'DELETE', originalUrl: '/api/user' }
+    const req = makeReq({ userId: 12, method: 'DELETE', originalUrl: '/api/user' })
 		const res = makeRes()
 		await userController.deleteAccount(req, res)
 		expect(validateUserNotExist).toHaveBeenCalledWith(user)
@@ -287,22 +265,20 @@ describe('controllers/user.js - deleteAccount', () => {
 		err.data = { s: true }
 		destroyAuthSession.mockRejectedValueOnce(err)
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { userId: 13, method: 'DELETE', originalUrl: '/api/user' }
+    const req = makeReq({ userId: 13, method: 'DELETE', originalUrl: '/api/user' })
 		const res = makeRes()
 		await userController.deleteAccount(req, res)
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(502)
-		expect(res.body).toEqual({ success: false, message: 'session fail', data: { s: true } })
+    expect(errorSpy).toHaveBeenCalled()
+    assertError(res, 502, 'session fail', { s: true })
 	})
 
 	test('catch falls back to defaults when findByPk throws', async () => {
 		User.findByPk.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { userId: 14, method: 'DELETE', originalUrl: '/api/user' }
-		const res = makeRes()
-		await userController.deleteAccount(req, res)
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+    const req = makeReq({ userId: 14, method: 'DELETE', originalUrl: '/api/user' })
+    const res = makeRes()
+    await userController.deleteAccount(req, res)
+    expect(errorSpy).toHaveBeenCalled()
+    assertInternalServerErrorWithDefaultData(res)
 	})
 })

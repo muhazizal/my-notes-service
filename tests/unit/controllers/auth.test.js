@@ -32,27 +32,8 @@ jest.mock('bcrypt', () => ({
 const { User } = require('../../../models/index')
 const bcrypt = require('bcrypt')
 const authController = require('../../../controllers/auth')
-
-const makeRes = () => {
-	const res = {}
-	res.statusCode = 200
-	res.cookies = {}
-	res.cookie = jest.fn((name, val) => {
-		res.cookies[name] = val
-	})
-	res.clearCookie = jest.fn((name) => {
-		delete res.cookies[name]
-	})
-	res.status = function (code) {
-		this.statusCode = code
-		return this
-	}
-	res.json = function (payload) {
-		this.body = payload
-		return this
-	}
-	return res
-}
+const { makeRes, makeReq } = require('../helpers/http')
+const { assertInternalServerErrorWithDefaultData } = require('../helpers/assert')
 
 describe('controllers/auth.js error branches', () => {
 	beforeEach(() => {
@@ -67,11 +48,11 @@ describe('controllers/auth.js error branches', () => {
 			isVerified: false,
 		})
 
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/login',
 			body: { email: 'a@b.com', password: 'secret' },
-		}
+		})
 		const res = makeRes()
 
 		await authController.login(req, res)
@@ -267,7 +248,7 @@ describe('controllers/auth.js success and email-failure branches', () => {
 	})
 
 	test('logout succeeds', async () => {
-		const req = { method: 'POST', originalUrl: '/api/auth/logout' }
+		const req = makeReq({ method: 'POST', originalUrl: '/api/auth/logout' })
 		const res = makeRes()
 		await authController.logout(req, res)
 		expect(res.statusCode).toBe(200)
@@ -279,7 +260,7 @@ describe('controllers/auth.js success and email-failure branches', () => {
 		destroyAuthSession.mockRejectedValueOnce(new Error('boom'))
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
 
-		const req = { method: 'POST', originalUrl: '/api/auth/logout' }
+		const req = makeReq({ method: 'POST', originalUrl: '/api/auth/logout' })
 		const res = makeRes()
 		await authController.logout(req, res)
 		expect(errorSpy).toHaveBeenCalled()
@@ -294,8 +275,7 @@ describe('controllers/auth.js success and email-failure branches', () => {
 		const res = makeRes()
 		await authController.logout(req, res)
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+		assertInternalServerErrorWithDefaultData(res)
 	})
 
 	test('checkAuthSession returns info', () => {
@@ -316,11 +296,11 @@ describe('controllers/auth.js success and email-failure branches', () => {
 			save: jest.fn().mockResolvedValue(),
 		}
 		User.findOne.mockResolvedValue(user)
-		const req = {
+		const req = makeReq({
 			method: 'GET',
 			originalUrl: '/api/auth/verify/xxx',
 			params: { token: 'x'.repeat(64) },
-		}
+		})
 		const res = makeRes()
 
 		await authController.verify(req, res)
@@ -354,7 +334,7 @@ describe('controllers/auth.js success and email-failure branches', () => {
 			save: jest.fn().mockResolvedValue(),
 		}
 		User.findOne.mockResolvedValue(user)
-		const req = { method: 'POST', originalUrl: '/api/auth/resend', body: { token: 'oldtok' } }
+		const req = makeReq({ method: 'POST', originalUrl: '/api/auth/resend', body: { token: 'oldtok' } })
 		const res = makeRes()
 
 		await authController.resendVerification(req, res)
@@ -375,7 +355,7 @@ describe('controllers/auth.js success and email-failure branches', () => {
 		sendEmailVerification.mockRejectedValueOnce(new Error('fail'))
 		const warnSpy = jest.spyOn(consola, 'warn').mockImplementation(() => {})
 
-		const req = { method: 'POST', originalUrl: '/api/auth/resend', body: { token: 'oldtok' } }
+		const req = makeReq({ method: 'POST', originalUrl: '/api/auth/resend', body: { token: 'oldtok' } })
 		const res = makeRes()
 		await authController.resendVerification(req, res)
 		expect(warnSpy).toHaveBeenCalled()
@@ -403,7 +383,7 @@ describe('controllers/auth.js success and email-failure branches', () => {
 	test('resendVerification returns 401 when user not found (catch path)', async () => {
 		User.findOne.mockResolvedValue(null)
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { method: 'POST', originalUrl: '/api/auth/resend', body: { token: 'doesntmatter' } }
+		const req = makeReq({ method: 'POST', originalUrl: '/api/auth/resend', body: { token: 'doesntmatter' } })
 		const res = makeRes()
 		await authController.resendVerification(req, res)
 		expect(errorSpy).toHaveBeenCalled()
@@ -414,7 +394,7 @@ describe('controllers/auth.js success and email-failure branches', () => {
 		const err = new Error('db-fail')
 		User.findOne.mockRejectedValueOnce(err)
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { method: 'POST', originalUrl: '/api/auth/resend', body: { token: 'tok' } }
+		const req = makeReq({ method: 'POST', originalUrl: '/api/auth/resend', body: { token: 'tok' } })
 		const res = makeRes()
 		await authController.resendVerification(req, res)
 		expect(errorSpy).toHaveBeenCalled()
@@ -424,11 +404,11 @@ describe('controllers/auth.js success and email-failure branches', () => {
 	test('forgotPassword succeeds and sends email', async () => {
 		const user = { id: 3, email: 'fp@example.com', save: jest.fn().mockResolvedValue() }
 		User.findOne.mockResolvedValue(user)
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/forgot',
 			body: { email: 'fp@example.com' },
-		}
+		})
 		const res = makeRes()
 
 		await authController.forgotPassword(req, res)
@@ -475,11 +455,11 @@ describe('controllers/auth.js success and email-failure branches', () => {
 	test('forgotPassword returns 401 when user not found (catch path)', async () => {
 		User.findOne.mockResolvedValue(null)
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/forgot',
 			body: { email: 'missing@example.com' },
-		}
+		})
 		const res = makeRes()
 		await authController.forgotPassword(req, res)
 		expect(errorSpy).toHaveBeenCalled()
@@ -494,12 +474,12 @@ describe('controllers/auth.js success and email-failure branches', () => {
 			save: jest.fn().mockResolvedValue(),
 		}
 		User.findOne.mockResolvedValue(user)
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/reset/xxx',
 			params: { token: 'x'.repeat(64) },
 			body: { password: 'newpass' },
-		}
+		})
 		const res = makeRes()
 
 		await authController.resetPassword(req, res)
@@ -514,11 +494,11 @@ describe('controllers/auth.js success and email-failure branches', () => {
 	test('forgotPassword returns 500 when DB throws (catch path)', async () => {
 		User.findOne.mockRejectedValueOnce(new Error('db'))
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/forgot',
 			body: { email: 'x@example.com' },
-		}
+		})
 		const res = makeRes()
 		await authController.forgotPassword(req, res)
 		expect(errorSpy).toHaveBeenCalled()
@@ -528,12 +508,12 @@ describe('controllers/auth.js success and email-failure branches', () => {
 	test('resetPassword returns 500 when findOne throws (catch path)', async () => {
 		User.findOne.mockRejectedValueOnce(new Error('db'))
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/reset/xxx',
 			params: { token: 'x'.repeat(64) },
 			body: { password: 'new' },
-		}
+		})
 		const res = makeRes()
 		await authController.resetPassword(req, res)
 		expect(errorSpy).toHaveBeenCalled()
@@ -543,11 +523,11 @@ describe('controllers/auth.js success and email-failure branches', () => {
 	test('login returns 500 when DB throws (catch path)', async () => {
 		User.findOne.mockRejectedValueOnce(new Error('db'))
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/login',
 			body: { email: 'a@b.com', password: 'x' },
-		}
+		})
 		const res = makeRes()
 		await authController.login(req, res)
 		expect(errorSpy).toHaveBeenCalled()
@@ -560,11 +540,11 @@ describe('controllers/auth.js success and email-failure branches', () => {
 		err.data = { field: 'email' }
 		User.findOne.mockRejectedValueOnce(err)
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/register',
 			body: { email: 'dup@example.com', password: 'pw', username: 'dup', fullname: 'Dup' },
-		}
+		})
 		const res = makeRes()
 		await authController.register(req, res)
 		expect(errorSpy).toHaveBeenCalled()
@@ -575,88 +555,82 @@ describe('controllers/auth.js success and email-failure branches', () => {
 	test('register catch falls back to 500 and default message/data when error lacks fields', async () => {
 		User.findOne.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/register',
 			body: { email: 'x@example.com', password: 'pw', username: 'x', fullname: 'X' },
-		}
+		})
 		const res = makeRes()
 		await authController.register(req, res)
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+		assertInternalServerErrorWithDefaultData(res)
 	})
 
 	test('login catch falls back to 500 and default message/data when error lacks fields', async () => {
 		User.findOne.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/login',
 			body: { email: 'a@b.com', password: 'x' },
-		}
+		})
 		const res = makeRes()
 		await authController.login(req, res)
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+		assertInternalServerErrorWithDefaultData(res)
 	})
 
 	test('verify catch falls back to 500 and default message/data when error lacks fields', async () => {
 		User.findOne.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
+		const req = makeReq({
 			method: 'GET',
 			originalUrl: '/api/auth/verify/xxx',
 			params: { token: 'x'.repeat(64) },
-		}
+		})
 		const res = makeRes()
 		await authController.verify(req, res)
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+		assertInternalServerErrorWithDefaultData(res)
 	})
 
 	test('resendVerification catch falls back to 500 and default message/data when error lacks fields', async () => {
 		User.findOne.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { method: 'POST', originalUrl: '/api/auth/resend', body: { token: 'tok' } }
+		const req = makeReq({ method: 'POST', originalUrl: '/api/auth/resend', body: { token: 'tok' } })
 		const res = makeRes()
 		await authController.resendVerification(req, res)
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+		assertInternalServerErrorWithDefaultData(res)
 	})
 
 	test('forgotPassword catch falls back to 500 and default message/data when error lacks fields', async () => {
 		User.findOne.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/forgot',
 			body: { email: 'x@example.com' },
-		}
+		})
 		const res = makeRes()
 		await authController.forgotPassword(req, res)
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+		assertInternalServerErrorWithDefaultData(res)
 	})
 
 	test('resetPassword catch falls back to 500 and default message/data when error lacks fields', async () => {
 		User.findOne.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
+		const req = makeReq({
 			method: 'POST',
 			originalUrl: '/api/auth/reset/xxx',
 			params: { token: 'x'.repeat(64) },
 			body: { password: 'new' },
-		}
+		})
 		const res = makeRes()
 		await authController.resetPassword(req, res)
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+		assertInternalServerErrorWithDefaultData(res)
 	})
 
 	test('resetPassword catch logs params token length fallback when token missing', async () => {
@@ -668,10 +642,9 @@ describe('controllers/auth.js success and email-failure branches', () => {
 			params: {},
 			body: { password: 'new' },
 		}
-		const res = makeRes()
-		await authController.resetPassword(req, res)
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
-	})
+	const res = makeRes()
+	await authController.resetPassword(req, res)
+	expect(errorSpy).toHaveBeenCalled()
+	assertInternalServerErrorWithDefaultData(res)
+})
 })

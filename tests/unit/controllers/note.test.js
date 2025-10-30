@@ -31,21 +31,8 @@ const { sanitizeTiptapHTML } = require('../../../utils/sanitize-html')
 const { validateRequest, validateNoteExist } = require('../../../validator/note')
 const consola = require('consola')
 const noteController = require('../../../controllers/note')
-
-const makeRes = () => {
-	const res = {}
-	res.statusCode = 200
-	res.body = null
-	res.status = function (code) {
-		this.statusCode = code
-		return this
-	}
-	res.json = function (payload) {
-		this.body = payload
-		return this
-	}
-	return res
-}
+const { makeRes, makeReq } = require('../helpers/http')
+const { assertInternalServerErrorWithDefaultData, assertError } = require('../helpers/assert')
 
 describe('controllers/note.js - getNotes', () => {
 	beforeEach(() => {
@@ -55,7 +42,7 @@ describe('controllers/note.js - getNotes', () => {
 	test('returns cached notes when present', async () => {
 		const cached = [{ id: 1 }]
 		cache.getJSON.mockResolvedValueOnce(cached)
-		const req = { userId: 5, method: 'GET', originalUrl: '/api/notes' }
+    const req = makeReq({ userId: 5, method: 'GET', originalUrl: '/api/notes' })
 		const res = makeRes()
 
 		await noteController.getNotes(req, res)
@@ -70,7 +57,7 @@ describe('controllers/note.js - getNotes', () => {
 		cache.getJSON.mockResolvedValueOnce(null)
 		const result = [{ id: 2 }]
 		Note.findAll.mockResolvedValueOnce(result)
-		const req = { userId: 7, method: 'GET', originalUrl: '/api/notes' }
+    const req = makeReq({ userId: 7, method: 'GET', originalUrl: '/api/notes' })
 		const res = makeRes()
 
 		await noteController.getNotes(req, res)
@@ -87,28 +74,26 @@ describe('controllers/note.js - getNotes', () => {
 		err.data = { retry: true }
 		Note.findAll.mockRejectedValueOnce(err)
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { userId: 8, method: 'GET', originalUrl: '/api/notes' }
+    const req = makeReq({ userId: 8, method: 'GET', originalUrl: '/api/notes' })
 		const res = makeRes()
 
 		await noteController.getNotes(req, res)
 
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(503)
-		expect(res.body).toEqual({ success: false, message: 'DB down', data: { retry: true } })
+    expect(errorSpy).toHaveBeenCalled()
+    assertError(res, 503, 'DB down', { retry: true })
 	})
 
 	test('catch falls back to 500 and default message/data', async () => {
 		cache.getJSON.mockResolvedValueOnce(null)
 		Note.findAll.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { userId: 9, method: 'GET', originalUrl: '/api/notes' }
-		const res = makeRes()
+    const req = makeReq({ userId: 9, method: 'GET', originalUrl: '/api/notes' })
+    const res = makeRes()
 
 		await noteController.getNotes(req, res)
 
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+    assertInternalServerErrorWithDefaultData(res)
 	})
 })
 
@@ -125,12 +110,12 @@ describe('controllers/note.js - createNote', () => {
 			raw_description: '<p>x</p>',
 		}
 		Note.create.mockResolvedValueOnce(created)
-		const req = {
-			userId: 4,
-			method: 'POST',
-			originalUrl: '/api/notes',
-			body: { title: 'T', description: '<p>x</p>' },
-		}
+    const req = makeReq({
+        userId: 4,
+        method: 'POST',
+        originalUrl: '/api/notes',
+        body: { title: 'T', description: '<p>x</p>' },
+    })
 		const res = makeRes()
 
 		await noteController.createNote(req, res)
@@ -149,37 +134,35 @@ describe('controllers/note.js - createNote', () => {
 			throw e
 		})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
-			userId: 4,
-			method: 'POST',
-			originalUrl: '/api/notes',
-			body: { title: 'T', description: '<p>x</p>' },
-		}
+    const req = makeReq({
+        userId: 4,
+        method: 'POST',
+        originalUrl: '/api/notes',
+        body: { title: 'T', description: '<p>x</p>' },
+    })
 		const res = makeRes()
 
 		await noteController.createNote(req, res)
 
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(422)
-		expect(res.body).toEqual({ success: false, message: 'Bad request', data: { field: 'title' } })
+    expect(errorSpy).toHaveBeenCalled()
+    assertError(res, 422, 'Bad request', { field: 'title' })
 	})
 
 	test('catch falls back to 500 and default message/data when DB throws', async () => {
 		Note.create.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
-			userId: 4,
-			method: 'POST',
-			originalUrl: '/api/notes',
-			body: { title: 'T', description: '<p>x</p>' },
-		}
-		const res = makeRes()
+    const req = makeReq({
+        userId: 4,
+        method: 'POST',
+        originalUrl: '/api/notes',
+        body: { title: 'T', description: '<p>x</p>' },
+    })
+    const res = makeRes()
 
 		await noteController.createNote(req, res)
 
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+    assertInternalServerErrorWithDefaultData(res)
 	})
 })
 
@@ -191,7 +174,7 @@ describe('controllers/note.js - getNoteById', () => {
 	test('returns cached note when present', async () => {
 		const cached = { id: 1, title: 'X' }
 		cache.getJSON.mockResolvedValueOnce(cached)
-		const req = { userId: 3, params: { id: 22 }, method: 'GET', originalUrl: '/api/notes/22' }
+    const req = makeReq({ userId: 3, params: { id: 22 }, method: 'GET', originalUrl: '/api/notes/22' })
 		const res = makeRes()
 
 		await noteController.getNoteById(req, res)
@@ -206,7 +189,7 @@ describe('controllers/note.js - getNoteById', () => {
 		cache.getJSON.mockResolvedValueOnce(null)
 		const found = { id: 22, title: 'Y', description: 'SAFE', raw_description: 'RAW' }
 		Note.findOne.mockResolvedValueOnce(found)
-		const req = { userId: 3, params: { id: 22 }, method: 'GET', originalUrl: '/api/notes/22' }
+    const req = makeReq({ userId: 3, params: { id: 22 }, method: 'GET', originalUrl: '/api/notes/22' })
 		const res = makeRes()
 
 		await noteController.getNoteById(req, res)
@@ -228,28 +211,26 @@ describe('controllers/note.js - getNoteById', () => {
 			throw e
 		})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { userId: 3, params: { id: 22 }, method: 'GET', originalUrl: '/api/notes/22' }
+    const req = makeReq({ userId: 3, params: { id: 22 }, method: 'GET', originalUrl: '/api/notes/22' })
 		const res = makeRes()
 
 		await noteController.getNoteById(req, res)
 
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(404)
-		expect(res.body).toEqual({ success: false, message: 'Note not found', data: { id: 22 } })
+    expect(errorSpy).toHaveBeenCalled()
+    assertError(res, 404, 'Note not found', { id: 22 })
 	})
 
 	test('catch falls back to 500 and default message/data when DB throws', async () => {
 		cache.getJSON.mockResolvedValueOnce(null)
 		Note.findOne.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { userId: 3, params: { id: 22 }, method: 'GET', originalUrl: '/api/notes/22' }
-		const res = makeRes()
+    const req = makeReq({ userId: 3, params: { id: 22 }, method: 'GET', originalUrl: '/api/notes/22' })
+    const res = makeRes()
 
 		await noteController.getNoteById(req, res)
 
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+    assertInternalServerErrorWithDefaultData(res)
 	})
 })
 
@@ -269,13 +250,13 @@ describe('controllers/note.js - updateNote', () => {
 				.mockResolvedValue({ id: 33, title: 'B', description: 'SAFE:new', raw_description: 'new' }),
 		}
 		Note.findOne.mockResolvedValueOnce(note)
-		const req = {
-			userId: 11,
-			params: { id: 33 },
-			method: 'PUT',
-			originalUrl: '/api/notes/33',
-			body: { title: 'B', description: 'new' },
-		}
+    const req = makeReq({
+        userId: 11,
+        params: { id: 33 },
+        method: 'PUT',
+        originalUrl: '/api/notes/33',
+        body: { title: 'B', description: 'new' },
+    })
 		const res = makeRes()
 
 		await noteController.updateNote(req, res)
@@ -297,39 +278,37 @@ describe('controllers/note.js - updateNote', () => {
 			throw e
 		})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
-			userId: 11,
-			params: { id: 33 },
-			method: 'PUT',
-			originalUrl: '/api/notes/33',
-			body: { title: 'B', description: 'new' },
-		}
+    const req = makeReq({
+        userId: 11,
+        params: { id: 33 },
+        method: 'PUT',
+        originalUrl: '/api/notes/33',
+        body: { title: 'B', description: 'new' },
+    })
 		const res = makeRes()
 
 		await noteController.updateNote(req, res)
 
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(422)
-		expect(res.body).toEqual({ success: false, message: 'Not exist', data: { id: 33 } })
+    expect(errorSpy).toHaveBeenCalled()
+    assertError(res, 422, 'Not exist', { id: 33 })
 	})
 
 	test('catch falls back to 500 and default message/data when DB throws', async () => {
 		Note.findOne.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = {
-			userId: 11,
-			params: { id: 33 },
-			method: 'PUT',
-			originalUrl: '/api/notes/33',
-			body: { title: 'B', description: 'new' },
-		}
-		const res = makeRes()
+    const req = makeReq({
+        userId: 11,
+        params: { id: 33 },
+        method: 'PUT',
+        originalUrl: '/api/notes/33',
+        body: { title: 'B', description: 'new' },
+    })
+    const res = makeRes()
 
 		await noteController.updateNote(req, res)
 
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+    assertInternalServerErrorWithDefaultData(res)
 	})
 })
 
@@ -341,7 +320,7 @@ describe('controllers/note.js - deleteNote', () => {
 	test('deletes note and clears related caches', async () => {
 		const note = { id: 44, destroy: jest.fn().mockResolvedValue(true) }
 		Note.findOne.mockResolvedValueOnce(note)
-		const req = { userId: 12, params: { id: 44 }, method: 'DELETE', originalUrl: '/api/notes/44' }
+    const req = makeReq({ userId: 12, params: { id: 44 }, method: 'DELETE', originalUrl: '/api/notes/44' })
 		const res = makeRes()
 
 		await noteController.deleteNote(req, res)
@@ -361,26 +340,24 @@ describe('controllers/note.js - deleteNote', () => {
 			throw e
 		})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { userId: 12, params: { id: 44 }, method: 'DELETE', originalUrl: '/api/notes/44' }
+    const req = makeReq({ userId: 12, params: { id: 44 }, method: 'DELETE', originalUrl: '/api/notes/44' })
 		const res = makeRes()
 
 		await noteController.deleteNote(req, res)
 
-		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(401)
-		expect(res.body).toEqual({ success: false, message: 'Missing', data: { id: 44 } })
+    expect(errorSpy).toHaveBeenCalled()
+    assertError(res, 401, 'Missing', { id: 44 })
 	})
 
 	test('catch falls back to 500 and default message/data when DB throws', async () => {
 		Note.findOne.mockRejectedValueOnce({})
 		const errorSpy = jest.spyOn(consola, 'error').mockImplementation(() => {})
-		const req = { userId: 12, params: { id: 44 }, method: 'DELETE', originalUrl: '/api/notes/44' }
-		const res = makeRes()
+    const req = makeReq({ userId: 12, params: { id: 44 }, method: 'DELETE', originalUrl: '/api/notes/44' })
+    const res = makeRes()
 
 		await noteController.deleteNote(req, res)
 
 		expect(errorSpy).toHaveBeenCalled()
-		expect(res.statusCode).toBe(500)
-		expect(res.body).toEqual({ success: false, message: 'Internal Server Error', data: {} })
+    assertInternalServerErrorWithDefaultData(res)
 	})
 })
