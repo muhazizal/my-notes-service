@@ -7,10 +7,10 @@
 		"serve:prod": "cross-env NODE_ENV=production node app.js",
 		"migrate:dev": "cross-env NODE_ENV=development npx sequelize-cli db:migrate",
 		"migrate:prod": "cross-env NODE_ENV=production npx sequelize-cli db:migrate",
-		"test": "cross-env NODE_ENV=test DB_DIALECT=sqlite DB_STORAGE=:memory: jest --runInBand",
-		"test:unit": "cross-env NODE_ENV=test DB_DIALECT=sqlite DB_STORAGE=:memory: jest --runInBand tests/unit",
-		"test:integration": "cross-env NODE_ENV=test DB_DIALECT=sqlite DB_STORAGE=:memory: jest --runInBand tests/integration",
-		"test:coverage": "cross-env NODE_ENV=test DB_DIALECT=sqlite DB_STORAGE=:memory: jest --runInBand --coverage"
+		"test": "cross-env NODE_ENV=test DB_DIALECT=sqlite DB_STORAGE=:memory: jest --runInBand --detectOpenHandles",
+		"test:unit": "cross-env NODE_ENV=test DB_DIALECT=sqlite DB_STORAGE=:memory: jest --runInBand --detectOpenHandles tests/unit",
+		"test:integration": "cross-env NODE_ENV=test DB_DIALECT=sqlite DB_STORAGE=:memory: jest --runInBand --detectOpenHandles tests/integration",
+		"test:coverage": "cross-env NODE_ENV=test DB_DIALECT=sqlite DB_STORAGE=:memory: jest --runInBand --detectOpenHandles --coverage"
 	},
 	"keywords": [],
 	"author": "",

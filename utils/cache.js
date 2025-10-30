@@ -1,12 +1,22 @@
 const redisClient = require('../config/redis')
 
-const commandTimeoutMs = Number(process.env.REDIS_COMMAND_TIMEOUT_MS || 2000)
+const DEFAULT_TIMEOUT_MS = 2000
 
-const withTimeout = async (promise, ms = commandTimeoutMs) => {
-	return Promise.race([
-		promise,
-		new Promise((resolve) => setTimeout(() => resolve(null), ms)),
-	])
+const withTimeout = async (promise, ms = Number(process.env.REDIS_COMMAND_TIMEOUT_MS || DEFAULT_TIMEOUT_MS)) => {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      resolve(null)
+    }, ms)
+    Promise.resolve(promise)
+      .then((value) => {
+        clearTimeout(timer)
+        resolve(value)
+      })
+      .catch((err) => {
+        clearTimeout(timer)
+        reject(err)
+      })
+  })
 }
 
 const isRedisReady = () => redisClient?.isOpen && redisClient?.isReady
