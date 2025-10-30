@@ -4,7 +4,7 @@ const sequelize = require('../../config/database')
 const { User, Note } = require('../../models')
 const { registerVerifyLogin } = require('./helpers/auth')
 const { resetUsers, resetNotes } = require('./helpers/db')
-const { assertInvalidRequest, collectMessages } = require('./helpers/assert')
+const { assertInvalidRequest, collectMessages, assertNotFound } = require('./helpers/assert')
 const { makeUserPayload } = require('./helpers/factory')
 
 describe('note integration', () => {
@@ -96,15 +96,11 @@ describe('note integration', () => {
 
 		// Get by id: not found (different id)
 		const getNotFound = await agent.get('/api/notes/999999')
-		expect(getNotFound.status).toBe(404)
-		expect(getNotFound.body.success).toBe(false)
-		expect(getNotFound.body.message).toBe('Note is not found')
+		assertNotFound(getNotFound)
 
 		// Delete: not found (different id)
 		const delNotFound = await agent.delete('/api/notes/999999')
-		expect(delNotFound.status).toBe(404)
-		expect(delNotFound.body.success).toBe(false)
-		expect(delNotFound.body.message).toBe('Note is not found')
+		assertNotFound(delNotFound)
 
 		// Delete: valid
 		const delValid = await agent.delete(`/api/notes/${created.id}`)
@@ -113,8 +109,7 @@ describe('note integration', () => {
 
 		// Get by id after delete: 404
 		const getAfterDel = await agent.get(`/api/notes/${created.id}`)
-		expect(getAfterDel.status).toBe(404)
-		expect(getAfterDel.body.message).toBe('Note is not found')
+		assertNotFound(getAfterDel)
 
 		// List notes: back to empty
 		const listBackEmpty = await agent.get('/api/notes')
