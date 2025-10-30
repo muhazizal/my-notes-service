@@ -9,6 +9,8 @@ module.exports = {
 	collectCoverageFrom: [
 		'<rootDir>/controllers/**/*.js',
 		'<rootDir>/middleware/**/*.js',
+		'<rootDir>/models/**/*.js',
+		'<rootDir>/routes/**/*.js',
 		'<rootDir>/schema/**/*.js',
 		'<rootDir>/utils/**/*.js',
 		'<rootDir>/validator/**/*.js',
@@ -20,7 +22,6 @@ module.exports = {
 		'/seeders/',
 		'/.github/',
 		'/config/',
-		'/routes/',
 	],
 	coverageThreshold: {
 		global: {
