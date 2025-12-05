@@ -12,8 +12,8 @@ const dialectOptions =
 		? {
 				ssl: {
 					require: true,
-					rejectUnauthorized: true,
-					ca: caCert,
+					rejectUnauthorized: false,
+					// ca: caCert,
 				},
 				keepAlive: true,
 		  }
